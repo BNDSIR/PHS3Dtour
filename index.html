@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#081526" />
+<title>Patkabari High School (H.S.) | 3D Virtual Campus Tour</title>
+<style>
+  :root {
+    --bg: #081526;
+    --glass: rgba(9, 22, 38, 0.86);
+    --glass-strong: rgba(12, 28, 48, 0.94);
+    --line: rgba(135, 195, 245, 0.25);
+    --text: #f0f7ff;
+    --muted: #9fb8d1;
+    --accent: #38b2ac;
+    --cyan: #63b3ed;
+    --gold: #f6c453;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Nirmala UI", "Hind Siliguri", sans-serif;
+  }
+  #viewport { position: fixed; inset: 0; }
+  #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+
+  /* Floating 3D Room & Landmark Tags */
+  .room-tag {
+    pointer-events: auto; cursor: pointer;
+    padding: 4px 10px; border-radius: 8px;
+    background: rgba(7, 19, 34, 0.88);
+    border: 1.5px solid var(--gold);
+    color: #ffffff; font-size: 11px; font-weight: 700;
+    white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .room-tag:hover, .room-tag.active {
+    background: #175666; border-color: #68d8ee; transform: scale(1.08);
+  }
+  .room-tag .r-no { color: var(--gold); margin-right: 5px; font-weight: 900; }
+
+  /* Top Header Bar */
+  .topbar {
+    position: fixed; z-index: 10; top: 10px; left: 12px; right: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap; pointer-events: none;
+  }
+  .brand, .top-actions {
+    pointer-events: auto; background: var(--glass);
+    border: 1px solid var(--line); backdrop-filter: blur(14px);
+    border-radius: 14px; padding: 8px 14px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .brand-badge {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--gold), #dd6b20);
+    color: #071320; font-weight: 900; font-size: 18px;
+    display: grid; place-items: center;
+  }
+  .brand h1 { margin: 0; font-size: 14.5px; font-weight: 800; color: #fff; }
+  .brand p { margin: 1px 0 0; font-size: 11px; color: var(--gold); font-weight: 600; }
+
+  .btn {
+    border: 1px solid var(--line); background: rgba(255,255,255,0.07);
+    color: var(--text); padding: 7px 11px; border-radius: 9px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer;
+    transition: 0.15s ease;
+  }
+  .btn:hover { border-color: #68d8ee; background: rgba(104, 216, 238, 0.18); }
+  .btn.active { background: #1c6573; border-color: #68d8ee; color: #fff; }
+  .btn.gold { background: rgba(246, 196, 83, 0.2); border-color: var(--gold); color: #ffe8a3; }
+
+  /* Right Public Room Locator & Info Drawer */
+  .side-panel {
+    position: fixed; z-index: 9; top: 74px; right: 12px;
+    width: min(330px, calc(100vw - 24px));
+    max-height: calc(100vh - 210px);
+    background: var(--glass); border: 1px solid var(--line);
+    backdrop-filter: blur(16px); border-radius: 16px;
+    padding: 13px; display: flex; flex-direction: column;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  }
+  .info-card {
+    padding: 11px; border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09);
+    margin-bottom: 10px;
+  }
+  .kicker { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #68d8ee; letter-spacing: 0.8px; }
+  .info-card h2 { margin: 4px 0 3px; font-size: 17px; color: var(--gold); }
+  .info-card p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+  .search-input {
+    width: 100%; padding: 8px 10px; border-radius: 9px;
+    border: 1px solid var(--line); background: #06101c; color: #fff;
+    font-size: 12px; margin-bottom: 8px;
+  }
+  .room-list {
+    overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding-right: 3px;
+  }
+  .room-chip {
+    text-align: left; padding: 7px 8px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text); cursor: pointer; font-size: 11px;
+  }
+  .room-chip:hover, .room-chip.active {
+    border-color: var(--gold); background: rgba(246, 196, 83, 0.16);
+  }
+  .room-chip strong { display: block; color: var(--gold); font-size: 11px; }
+  .room-chip span { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Bottom Character Walking Controller Dock */
+  .walk-dock {
+    position: fixed; z-index: 10; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: var(--glass-strong); border: 1px solid var(--line);
+    backdrop-filter: blur(16px); border-radius: 18px;
+    padding: 10px 16px; display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 16px 42px rgba(0,0,0,0.55);
+  }
+  .walk-hint {
+    max-width: 195px; font-size: 11px; color: var(--muted); line-height: 1.4;
+  }
+  .walk-hint strong { display: block; color: var(--gold); font-size: 12px; margin-bottom: 2px; }
+  .dpad {
+    display: grid;
+    grid-template-columns: repeat(4, 58px);
+    grid-template-rows: repeat(2, 42px);
+    gap: 6px;
+  }
+  .walk-btn {
+    border: 1px solid rgba(120, 200, 235, 0.35);
+    background: rgba(24, 52, 80, 0.9);
+    color: #fff; border-radius: 10px; font-size: 11.5px; font-weight: 800;
+    cursor: pointer; user-select: none; touch-action: manipulation;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.08s ease, background 0.12s ease;
+  }
+  .walk-btn:active, .walk-btn.pressed {
+    background: #38b2ac; color: #04131d; border-color: #81e6d9; transform: scale(0.95);
+  }
+
+  /* User Guide & Welcome Start Modal (Unlocks Web Audio Music + Explains Controls) */
+  .modal-backdrop {
+    position: fixed; z-index: 30; inset: 0;
+    background: rgba(4, 12, 22, 0.86);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .guide-modal {
+    width: min(560px, 100%);
+    background: var(--glass-strong);
+    border: 1.5px solid rgba(246, 196, 83, 0.45);
+    border-radius: 20px; padding: 22px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+  }
+  .guide-modal h2 { margin: 0 0 4px; font-size: 20px; color: var(--gold); }
+  .guide-modal .sub { font-size: 12.5px; color: #68d8ee; font-weight: 700; margin-bottom: 14px; }
+  .guide-list {
+    margin: 0 0 16px; padding-left: 18px;
+    font-size: 13px; line-height: 1.65; color: #e2eefb;
+  }
+  .guide-list li { margin-bottom: 6px; }
+  .guide-list b { color: var(--gold); }
+  .load-progress {
+    padding: 9px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--line);
+    font-size: 12px; color: #9ae6b4; margin-bottom: 14px;
+  }
+  .start-tour-btn {
+    width: 100%; padding: 13px; border-radius: 12px; border: 0;
+    background: linear-gradient(135deg, #f6c453, #dd6b20);
+    color: #071320; font-size: 15px; font-weight: 900; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(221, 107, 32, 0.4);
+  }
+  .start-tour-btn:hover { filter: brightness(1.08); }
+
+  @media (max-width: 760px) {
+    .side-panel { top: auto; bottom: 122px; right: 8px; left: 8px; width: auto; max-height: 28vh; padding: 10px; }
+    .walk-hint { display: none; }
+    .dpad { grid-template-columns: repeat(4, 52px); grid-template-rows: repeat(2, 38px); }
+    .brand h1 { font-size: 12.5px; }
+    .brand p { display: none; }
+  }
+</style>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="viewport"></div>
+<div id="labels"></div>
+
+<!-- Top Public Navigation & Sound Controls -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-badge">🏫</div>
+    <div>
+      <h1>PATKABARI HIGH SCHOOL (H.S.) · পাটিকাবাড়ী উচ্চ বিদ্যালয়</h1>
+      <p>3D Animated Character Walkthrough & Room Locator</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="btn active" id="btnSpawnGate">⛩️ Main Gate</button>
+    <button class="btn" data-floor="0">নিচতলা (G-Fl)</button>
+    <button class="btn" data-floor="1">দোতলা (1st Fl)</button>
+    <button class="btn" data-floor="2">তিনতলা (2nd Fl)</button>
+    <button class="btn active" id="btnCamMode">🎥 Follow Cam</button>
+    <button class="btn active" id="btnMusic">🎵 Music: ON</button>
+    <button class="btn active" id="btnFootsteps">👣 Steps: ON</button>
+    <button class="btn gold" id="btnGuide">📖 নির্দেশিকা (Guide)</button>
+  </div>
+</header>
+
+<!-- Right Public Room Locator -->
+<aside class="side-panel" id="sidePanel">
+  <div class="info-card">
+    <div class="kicker" id="infoFloor">MAIN GATE · প্রধান প্রবেশদ্বার</div>
+    <h2 id="infoTitle">Patkabari High School (H.S.)</h2>
+    <p id="infoDesc">প্রধান গেট থেকে যাত্রা শুরু হয়েছে। নিচের বাটন চেপে চরিত্রটিকে বারান্দা বা যেকোনো কক্ষের সামনে হাঁটিয়ে নিয়ে যান।</p>
+    <div style="margin-top:8px; display:flex; gap:6px;">
+      <button class="btn gold" id="btnWalkCharHere" style="width:100%;">🚶 এই কক্ষের সামনে যান (Walk Here)</button>
+    </div>
+  </div>
+
+  <input type="search" id="searchRoom" class="search-input" placeholder="🔍 কক্ষ খুঁজুন (যেমন: 101, Lab, বাথরুম, অফিস)..." />
+  <div class="room-list" id="roomList"></div>
+</aside>
+
+<!-- Bottom Character Movement Controller -->
+<section class="walk-dock">
+  <div class="walk-hint">
+    <strong>চরিত্র নিয়ন্ত্রণ (Character Control)</strong>
+    হাঁটার জন্য নিচের বাটন চাপুন অথবা কীবোর্ডের <b>W A S D / Arrow Keys</b> ব্যবহার করুন।
+  </div>
+  <div class="dpad">
+    <button class="walk-btn" data-mv="turnL" title="বাঁদিকে ঘুরুন">⟲ Turn L</button>
+    <button class="walk-btn" data-mv="fwd"   title="সামনে হাঁটুন">▲ Fwd</button>
+    <button class="walk-btn" data-mv="turnR" title="ডানদিকে ঘুরুন">⟳ Turn R</button>
+    <button class="walk-btn" data-mv="up"    title="উপরের তলায় যান">▲ Up Flr</button>
+    <button class="walk-btn" data-mv="left"  title="বাঁয়ে সরুন">◄ Left</button>
+    <button class="walk-btn" data-mv="back"  title="পিছনে হাঁটুন">▼ Back</button>
+    <button class="walk-btn" data-mv="right" title="ডানে সরুন">► Right</button>
+    <button class="walk-btn" data-mv="down"  title="নিচের তলায় যান">▼ Dn Flr</button>
+  </div>
+</section>
+
+<!-- Public Bengali/English User Guide & Audio Unlock Modal -->
+<div class="modal-backdrop" id="guideModal">
+  <div class="guide-modal">
+    <h2>পাটিকাবাড়ী উচ্চ বিদ্যালয় (উঃ মাঃ) · 3D ভ্রমণ নির্দেশিকা</h2>
+    <div class="sub">PATKABARI HIGH SCHOOL (H.S.) · Interactive 3D Character Tour</div>
+    <ul class="guide-list">
+      <li><b>গেট থেকে শুরু (Start from Main Gate):</b> আপনার 3D অ্যানিমেটেড চরিত্রটি বিদ্যালয়ের প্রধান গেটের সামনে প্রস্তুত আছে।</li>
+      <li><b>হাঁটাচলা (Character Walking):</b> স্ক্রিনের নিচের <b>▲ Fwd, ▼ Back, ◄ Left, ► Right</b> বাটন চেপে ধরে রাখলে (অথবা কীবোর্ডের <b>W, A, S, D / Arrow Keys</b> চাপলে) চরিত্রটি হাঁটবে এবং পায়ের হাঁটার শব্দ (Walking Sound) শোনা যাবে।</li>
+      <li><b>তলা পরিবর্তন (Climb Floors):</b> সিঁড়ি বা যেকোনো স্থান থেকে <b>▲ Up Flr / ▼ Dn Flr</b> বা উপরের <b>নিচতলা / দোতলা / তিনতলা</b> বাটনে চাপ দিয়ে তলা পরিবর্তন করা যাবে।</li>
+      <li><b>কক্ষ খোঁজা (Room Locator):</b> ডানদিকের তালিকা থেকে যেকোনো কক্ষ, ল্যাব, অফিস বা বাথরুমে ক্লিক করে <b>"🚶 এই কক্ষের সামনে যান"</b> চাপলে চরিত্রটি সেখানে পৌঁছে যাবে।</li>
+      <li><b>মিষ্টি আবহ সঙ্গীত (Background Music):</b> ভ্রমণের সময় মৃদু আবহ সঙ্গীত বাজবে, যা উপরের <b>🎵 Music</b> বাটন দিয়ে নিয়ন্ত্রণ করা যাবে।</li>
+    </ul>
+    <div class="load-progress" id="loadStatusText">
+      ⏳ Loading <b>school.glb</b> &amp; animated <b>character.fbx</b>…
+    </div>
+    <button class="start-tour-btn" id="btnStartTour">
+      ▶ বিদ্যালয় ভ্রমণ শুরু করুন (Start Tour with Music)
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const $ = id => document.getElementById(id);
+
+// ============================================================================
+// 1. FILE PATHS FOR GITHUB PAGES AUTO-LOADING
+// ============================================================================
+// Put school.glb and character.fbx in the same folder as this HTML file!
+const SCHOOL_GLB_CANDIDATES = ['./school.glb', './patkabari_school_full.glb', './school_model.glb'];
+const CHARACTER_FBX_CANDIDATES = ['./character.fbx', './walk.fbx', './boy.fbx', './aj.fbx'];
+
+// Starting position right outside Patkabari High School Main Gate
+const GATE_START_POS = new THREE.Vector3(-25.0, 0.0, 0.0);
+const GATE_START_ROT_Y = Math.PI / 2; // Facing East into the courtyard
+
+// ============================================================================
+// 2. WEB AUDIO SYNTHESIZER: SWEET PENTATONIC BGM + REALISTIC FOOTSTEPS
+// ============================================================================
+class SchoolAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.musicEnabled = true;
+    this.stepsEnabled = true;
+    this.bgmTimer = null;
+    this.stepAccumulator = 0;
+    this.noteIdx = 0;
+    // Sweet Indian Pentatonic Scale (Raag Bhupali / Deshkar: Sa Re Ga Pa Dha Sa)
+    this.melody = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66];
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    this.startSweetBGM();
+  }
+
+  startSweetBGM() {
+    if (this.bgmTimer) return;
+    const playNextNote = () => {
+      if (!this.musicEnabled || !this.ctx || this.ctx.state !== 'running') return;
+      const now = this.ctx.currentTime;
+      const freq = this.melody[this.noteIdx % this.melody.length];
+      this.noteIdx++;
+
+      // Soft Bansuri Flute Sine-Triangle Harmonic Voice
+      const osc = this.ctx.createOscillator();
+      const sub = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      sub.type = 'triangle';
+      sub.frequency.setValueAtTime(freq * 0.5, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.035, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 1.65);
+
+      osc.connect(gain);
+      sub.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      sub.start(now);
+      osc.stop(now + 1.7);
+      sub.stop(now + 1.7);
+    };
+    playNextNote();
+    this.bgmTimer = setInterval(playNextNote, 1450);
+  }
+
+  playFootstep() {
+    if (!this.stepsEnabled || !this.ctx || this.ctx.state !== 'running') return;
+    const now = this.ctx.currentTime;
+
+    // Short filtered noise burst + low heel thump for realistic shoe step
+    const bufferSize = this.ctx.sampleRate * 0.065;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(720 + Math.random() * 160, now);
+    filter.Q.setValueAtTime(2.2, now);
+
+    const stepGain = this.ctx.createGain();
+    stepGain.gain.setValueAtTime(0.11, now);
+    stepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+
+    noise.connect(filter);
+    filter.connect(stepGain);
+    stepGain.connect(this.ctx.destination);
+    noise.start(now);
+  }
+}
+const audio = new SchoolAudioEngine();
+
+// ============================================================================
+// 3. THREE.JS SCENE, CAMERA & RENDERERS
+// ============================================================================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x88b8de);
+scene.fog = new THREE.FogExp2(0x88b8de, 0.005);
+
+const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 350);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('viewport').appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+$('labels').appendChild(labelRenderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 1.8;
+controls.maxDistance = 65;
+
+// Warm Bengal Daylight
+scene.add(new THREE.HemisphereLight(0xffffff, 0xc9b28b, 1.25));
+const sunLight = new THREE.DirectionalLight(0xfff5e4, 2.2);
+sunLight.position.set(30, 52, 25);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+scene.add(sunLight);
+
+const campusRoot = new THREE.Group();
+scene.add(campusRoot);
+
+// ============================================================================
+// 4. PUBLIC ROOM DIRECTORY & BUILT-IN PATKABARI CAMPUS FALLBACK
+// ============================================================================
+const ROOM_DIRECTORY = [];
+const roomTagElements = {};
+let activeRoomId = 'GATE';
+
+function registerLandmark(id, no, name, desc, floor, worldPos) {
+  const item = { id, no, name, desc, floor, pos: worldPos.clone() };
+  ROOM_DIRECTORY.push(item);
+
+  const div = document.createElement('div');
+  div.className = 'room-tag';
+  div.innerHTML = `<span class="r-no">${no}</span><span>${name}</span>`;
+  div.addEventListener('click', e => {
+    e.stopPropagation();
+    selectLandmark(id, false);
+  });
+
+  const label = new CSS2DObject(div);
+  label.position.copy(worldPos);
+  campusRoot.add(label);
+  roomTagElements[id] = div;
+}
+
+function buildFallbackSchoolIfNoGLB() {
+  const matWall = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.82 });
+  const matRed  = new THREE.MeshStandardMaterial({ color: 0xb84a39, roughness: 0.68 });
+  const matBlue = new THREE.MeshStandardMaterial({ color: 0x1e4d8c, roughness: 0.60 });
+  const matFlr  = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.80 });
+  const matGnd  = new THREE.MeshStandardMaterial({ color: 0xc9b28b, roughness: 0.95 });
+  const matGrs  = new THREE.MeshStandardMaterial({ color: 0x688f4e, roughness: 0.90 });
+  const matDoor = new THREE.MeshStandardMaterial({ color: 0x2b5b84, roughness: 0.55 });
+  const matStone= new THREE.MeshStandardMaterial({ color: 0x738072, roughness: 0.85 });
+
+  function box(w, h, d, x, y, z, mat) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    m.receiveShadow = true; m.castShadow = true;
+    campusRoot.add(m);
+    return m;
+  }
+
+  // Ground & Flower Garden
+  box(110, 0.4, 90, 0, -0.2, 0, matGnd);
+  box(12, 0.3, 5, -4, 0.15, -4, matGrs);
+
+  // Main Gate at (-25, 0, 0)
+  for (const s of [-1, 1]) {
+    const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 4.4, 24), matStone);
+    pil.position.set(-25, 2.2, s * 2.35);
+    campusRoot.add(pil);
+  }
+  box(0.68, 0.55, 6.1, -25, 3.75, 0, matStone);
+  box(1.5, 0.28, 6.8, -25, 4.65, 0, matStone);
+  registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, new THREE.Vector3(-25, 4.2, 0));
+
+  // Main Academic Wing (North) & Opposite South Wing
+  const wings = [
+    { id: 'Main', z: -15, dir: 1, rooms: 7 },
+    { id: 'South', z: 15, dir: -1, rooms: 5 }
+  ];
+  wings.forEach(w => {
+    const bayW = 5.4, floorH = 3.6, totalW = w.rooms * bayW, startX = -totalW / 2 + 2;
+    for (let f = 0; f < 3; f++) {
+      const y0 = f * floorH;
+      box(totalW + 4, 0.22, 7.8, 2, y0 - 0.11, w.z - w.dir * 1.3, matFlr);
+      box(totalW + 4, 0.28, 0.36, 2, y0 + floorH - 0.14, w.z + w.dir * 1.3, matRed);
+
+      for (let r = 1; r <= w.rooms; r++) {
+        const rx = startX + (r - 0.5) * bayW;
+        const wallZ = w.z - w.dir * 1.3;
+        const archZ = w.z + w.dir * 1.3;
+        box(bayW - 0.08, floorH - 0.22, 0.24, rx, y0 + (floorH - 0.22)/2, wallZ, matWall);
+        box(1.1, 2.2, 0.3, rx - 0.8, y0 + 1.1, wallZ, matDoor);
+        box(0.45, floorH - 0.25, 0.32, rx - bayW/2 + 0.22, y0 + 1.65, archZ, matWall);
+
+        const trim = new THREE.Mesh(new THREE.TorusGeometry(bayW * 0.36, 0.12, 8, 16, Math.PI), (w.id==='South' && f===1) ? matBlue : matRed);
+        trim.position.set(rx, y0 + floorH - 1.45, archZ);
+        campusRoot.add(trim);
+
+        const rCode = `${w.id}_F${f}_R${r}`;
+        const rNo = (w.id === 'South' && f === 0 && r === w.rooms) ? 'বাথরুম' : `Room ${w.id==='Main'?'':'S-'}${f+1}0${r}`;
+        const rName = (w.id==='Main' && f===0 && r===1) ? 'HM / TIC Office'
+                    : (w.id==='Main' && f===1 && r===1) ? 'Biology Lab · জীববিদ্যা'
+                    : (w.id==='South' && f===0 && r===w.rooms) ? 'ছাত্র / ছাত্রী বাথরুম'
+                    : `Class Room ${f+1}0${r}`;
+        registerLandmark(rCode, rNo, rName, `${w.id} Wing · Floor ${f}`, f, new THREE.Vector3(rx, y0 + 2.75, wallZ + w.dir * 0.35));
+      }
+    }
+  });
+}
+
+// ============================================================================
+// 5. ANIMATED CHARACTER CONTROLLER (AUTOLOADS MIXAMO FBX + FALLBACK AVATAR)
+// ============================================================================
+const characterPivot = new THREE.Group();
+characterPivot.position.copy(GATE_START_POS);
+characterPivot.rotation.y = GATE_START_ROT_Y;
+scene.add(characterPivot);
+
+let charMixer = null;
+let walkAction = null;
+let fallbackLimbs = null;
+
+function createFallbackStudentAvatar() {
+  const g = new THREE.Group();
+  const matShirt = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+  const matPants = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.7 });
+  const matSkin  = new THREE.MeshStandardMaterial({ color: 0xd69e72, roughness: 0.6 });
+  const matHair  = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 14), matSkin);
+  head.position.y = 1.56;
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.168, 16, 12, 0, Math.PI*2, 0, Math.PI*0.55), matHair);
+  hair.position.y = 1.58;
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.52, 0.20), matShirt);
+  torso.position.y = 1.12;
+
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.75, 0.14), matPants);
+  legL.position.set(-0.10, 0.45, 0);
+  const legR = legL.clone(); legR.position.x = 0.10;
+
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.48, 0.10), matShirt);
+  armL.position.set(-0.25, 1.10, 0);
+  const armR = armL.clone(); armR.position.x = 0.25;
+
+  g.add(head, hair, torso, legL, legR, armL, armR);
+  characterPivot.add(g);
+  fallbackLimbs = { legL, legR, armL, armR };
+}
+
+// Remove horizontal root-motion translation from Mixamo Hips track so character stays inside characterPivot
+function lockMixamoInPlace(clip) {
+  clip.tracks.forEach(track => {
+    if (track.name.includes('Hips.position')) {
+      const vals = track.values;
+      const baseX = vals[0], baseZ = vals[2];
+      for (let i = 0; i < vals.length; i += 3) {
+        vals[i] = baseX;
+        vals[i + 2] = baseZ;
+      }
+    }
+  });
+}
+
+async function autoLoadSchoolAndCharacter() {
+  const gltfLoader = new GLTFLoader();
+  const fbxLoader = new FBXLoader();
+
+  // 1. Try loading school.glb
+  let schoolLoaded = false;
+  for (const url of SCHOOL_GLB_CANDIDATES) {
+    try {
+      const gltf = await gltfLoader.loadAsync(url);
+      campusRoot.add(gltf.scene);
+      schoolLoaded = true;
+
+      // Extract any 3D signboards or Room_ meshes from the uploaded school.glb for the Room Locator
+      registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, new THREE.Vector3(-25, 4.2, 0));
+      gltf.scene.traverse(obj => {
+        if (obj.isMesh) {
+          obj.castShadow = true; obj.receiveShadow = true;
+          if (obj.name.startsWith('Signboard_3D_') || obj.name.startsWith('Board_') || obj.name.startsWith('Room_')) {
+            const wp = new THREE.Vector3();
+            obj.getWorldPosition(wp);
+            const clean = obj.name.replace('Signboard_3D_', '').replace('Board_', '').replace('Room_', '');
+            const parts = clean.split('_');
+            const rNo = parts[0] || 'Room';
+            const rName = parts.slice(1).join(' ') || clean;
+            const flr = Math.max(0, Math.round(wp.y / 3.6));
+            registerLandmark(obj.name, rNo, rName, `Floor ${flr}`, flr, wp.clone().add(new THREE.Vector3(0, 0.45, 0)));
+          }
+        }
+      });
+      break;
+    } catch (_) {}
+  }
+
+  if (!schoolLoaded) {
+    buildFallbackSchoolIfNoGLB();
+  }
+
+  // 2. Try loading animated character.fbx (Mixamo FBX)
+  let charLoaded = false;
+  for (const url of CHARACTER_FBX_CANDIDATES) {
+    try {
+      const fbx = await fbxLoader.loadAsync(url);
+      // Normalize Mixamo character height to 1.72m human scale
+      const box = new THREE.Box3().setFromObject(fbx);
+      const size = box.getSize(new THREE.Vector3());
+      const scale = 1.72 / Math.max(size.y, 0.001);
+      fbx.scale.setScalar(scale);
+
+      const newBox = new THREE.Box3().setFromObject(fbx);
+      fbx.position.y -= newBox.min.y;
+
+      fbx.traverse(c => {
+        if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; }
+      });
+
+      characterPivot.add(fbx);
+
+      if (fbx.animations && fbx.animations.length > 0) {
+        const clip = fbx.animations[0];
+        lockMixamoInPlace(clip);
+        charMixer = new THREE.AnimationMixer(fbx);
+        walkAction = charMixer.clipAction(clip);
+        walkAction.play();
+        walkAction.paused = true; // Paused in idle pose until user moves
+      }
+      charLoaded = true;
+      break;
+    } catch (_) {}
+  }
+
+  if (!charLoaded) {
+    createFallbackStudentAvatar();
+  }
+
+  renderRoomList();
+  selectLandmark('GATE', false);
+  $('loadStatusText').innerHTML = `✔ <b>Campus &amp; Animated Character Ready!</b> Starting at Main Gate.`;
+}
+
+// ============================================================================
+// 6. UI, ROOM LOCATOR & CAMERA FOLLOW LOGIC
+// ============================================================================
+let followCamEnabled = true;
+let autoWalkDestination = null;
+
+function renderRoomList(filter = '') {
+  const root = $('roomList');
+  root.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+
+  ROOM_DIRECTORY.forEach(item => {
+    if (q && !(`${item.no} ${item.name} ${item.desc}`.toLowerCase().includes(q))) return;
+    const btn = document.createElement('button');
+    btn.className = 'room-chip' + (item.id === activeRoomId ? ' active' : '');
+    btn.innerHTML = `<strong>${item.no}</strong><span>${item.name}</span>`;
+    btn.addEventListener('click', () => selectLandmark(item.id, false));
+    root.appendChild(btn);
+  });
+}
+
+function selectLandmark(id, walkImmediately = false) {
+  const item = ROOM_DIRECTORY.find(r => r.id === id);
+  if (!item) return;
+  activeRoomId = id;
+
+  const flrNames = ['নিচতলা (Ground Floor)', 'দোতলা (1st Floor)', 'তিনতলা (2nd Floor)'];
+  $('infoFloor').textContent = flrNames[item.floor] || 'CAMPUS LANDMARK';
+  $('infoTitle').textContent = `${item.no} · ${item.name}`;
+  $('infoDesc').textContent = item.desc;
+
+  Object.entries(roomTagElements).forEach(([k, div]) => div.classList.toggle('active', k === id));
+  renderRoomList($('searchRoom').value);
+
+  if (walkImmediately) walkCharacterToLandmark(item);
+}
+
+function walkCharacterToLandmark(item) {
+  // Set floor height & walk target in front of the selected room door
+  const floorY = item.floor * 3.6;
+  characterPivot.position.y = floorY;
+  const zOffset = item.pos.z < 0 ? 1.8 : -1.8;
+  autoWalkDestination = new THREE.Vector3(item.pos.x, floorY, item.pos.z + zOffset);
+}
+
+$('btnWalkCharHere').addEventListener('click', () => {
+  const item = ROOM_DIRECTORY.find(r => r.id === activeRoomId);
+  if (item) walkCharacterToLandmark(item);
+});
+
+$('searchRoom').addEventListener('input', e => renderRoomList(e.target.value));
+
+$('btnSpawnGate').addEventListener('click', () => {
+  autoWalkDestination = null;
+  characterPivot.position.copy(GATE_START_POS);
+  characterPivot.rotation.y = GATE_START_ROT_Y;
+  selectLandmark('GATE', false);
+});
+
+document.querySelectorAll('[data-floor]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    autoWalkDestination = null;
+    const flr = Number(btn.dataset.floor);
+    characterPivot.position.set(-12, flr * 3.6, -13.2);
+    characterPivot.rotation.y = Math.PI / 2;
+  });
+});
+
+$('btnCamMode').addEventListener('click', () => {
+  followCamEnabled = !followCamEnabled;
+  $('btnCamMode').classList.toggle('active', followCamEnabled);
+  $('btnCamMode').textContent = followCamEnabled ? '🎥 Follow Cam' : '🌐 Free Orbit';
+});
+
+$('btnMusic').addEventListener('click', () => {
+  audio.init();
+  audio.musicEnabled = !audio.musicEnabled;
+  $('btnMusic').classList.toggle('active', audio.musicEnabled);
+  $('btnMusic').textContent = audio.musicEnabled ? '🎵 Music: ON' : '🎵 Music: OFF';
+});
+
+$('btnFootsteps').addEventListener('click', () => {
+  audio.init();
+  audio.stepsEnabled = !audio.stepsEnabled;
+  $('btnFootsteps').classList.toggle('active', audio.stepsEnabled);
+  $('btnFootsteps').textContent = audio.stepsEnabled ? '👣 Steps: ON' : '👣 Steps: OFF';
+});
+
+$('btnGuide').addEventListener('click', () => {
+  $('guideModal').style.display = 'flex';
+});
+
+$('btnStartTour').addEventListener('click', () => {
+  $('guideModal').style.display = 'none';
+  audio.init();
+});
+
+// Movement Controls (On-screen D-Pad + Keyboard)
+const mv = { fwd:false, back:false, left:false, right:false, turnL:false, turnR:false, up:false, down:false };
+document.querySelectorAll('.walk-btn').forEach(btn => {
+  const key = btn.dataset.mv;
+  const start = e => {
+    e.preventDefault();
+    audio.init();
+    autoWalkDestination = null;
+    mv[key] = true;
+    btn.classList.add('pressed');
+  };
+  const end = () => {
+    mv[key] = false;
+    btn.classList.remove('pressed');
+  };
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', end);
+  btn.addEventListener('pointerleave', end);
+});
+
+window.addEventListener('keydown', e => {
+  if (document.activeElement.tagName === 'INPUT') return;
+  audio.init();
+  if (['w','W','ArrowUp'].includes(e.key))    { mv.fwd = true; autoWalkDestination = null; }
+  if (['s','S','ArrowDown'].includes(e.key))  { mv.back = true; autoWalkDestination = null; }
+  if (['a','A','ArrowLeft'].includes(e.key))  { mv.turnL = true; autoWalkDestination = null; }
+  if (['d','D','ArrowRight'].includes(e.key)) { mv.turnR = true; autoWalkDestination = null; }
+  if (e.key === 'q' || e.key === 'Q')         { mv.left = true; autoWalkDestination = null; }
+  if (e.key === 'e' || e.key === 'E')         { mv.right = true; autoWalkDestination = null; }
+});
+
+window.addEventListener('keyup', e => {
+  if (['w','W','ArrowUp'].includes(e.key))    mv.fwd = false;
+  if (['s','S','ArrowDown'].includes(e.key))  mv.back = false;
+  if (['a','A','ArrowLeft'].includes(e.key))  mv.turnL = false;
+  if (['d','D','ArrowRight'].includes(e.key)) mv.turnR = false;
+  if (e.key === 'q' || e.key === 'Q')         mv.left = false;
+  if (e.key === 'e' || e.key === 'E')         mv.right = false;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+});
+
+// ============================================================================
+// 7. MAIN ANIMATION LOOP (CHARACTER WALKING, MIXAMO SKELETON & FOOTSTEP SOUND)
+// ============================================================================
+autoLoadSchoolAndCharacter();
+
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const walkSpeed = 4.2 * dt;
+  const turnSpeed = 2.0 * dt;
+
+  let isWalking = false;
+
+  // 1. Handle Auto-Walk to Selected Room or Manual D-Pad / Keyboard Walking
+  if (autoWalkDestination) {
+    const toTarget = autoWalkDestination.clone().sub(characterPivot.position);
+    toTarget.y = 0;
+    if (toTarget.length() > 0.25) {
+      const desiredYaw = Math.atan2(toTarget.x, toTarget.z);
+      characterPivot.rotation.y = desiredYaw;
+      toTarget.normalize();
+      characterPivot.position.addScaledVector(toTarget, walkSpeed * 1.25);
+      isWalking = true;
+    } else {
+      autoWalkDestination = null;
+    }
+  } else {
+    if (mv.turnL) characterPivot.rotation.y += turnSpeed;
+    if (mv.turnR) characterPivot.rotation.y -= turnSpeed;
+
+    const forward = new THREE.Vector3(
+      Math.sin(characterPivot.rotation.y),
+      0,
+      Math.cos(characterPivot.rotation.y)
+    );
+    const right = new THREE.Vector3(forward.z, 0, -forward.x);
+
+    if (mv.fwd)   { characterPivot.position.addScaledVector(forward, walkSpeed);  isWalking = true; }
+    if (mv.back)  { characterPivot.position.addScaledVector(forward, -walkSpeed); isWalking = true; }
+    if (mv.left)  { characterPivot.position.addScaledVector(right, -walkSpeed);   isWalking = true; }
+    if (mv.right) { characterPivot.position.addScaledVector(right, walkSpeed);    isWalking = true; }
+    if (mv.up)    { characterPivot.position.y = Math.min(7.2, characterPivot.position.y + 3.0 * dt); isWalking = true; }
+    if (mv.down)  { characterPivot.position.y = Math.max(0.0, characterPivot.position.y - 3.0 * dt); isWalking = true; }
+  }
+
+  // 2. Drive Mixamo FBX Walking Animation & Synchronized Footstep Audio
+  if (charMixer && walkAction) {
+    walkAction.paused = !isWalking;
+    charMixer.update(dt);
+  } else if (fallbackLimbs) {
+    const t = clock.elapsedTime * 9.0;
+    const swing = isWalking ? Math.sin(t) * 0.55 : 0;
+    fallbackLimbs.legL.rotation.x = swing;
+    fallbackLimbs.legR.rotation.x = -swing;
+    fallbackLimbs.armL.rotation.x = -swing * 0.7;
+    fallbackLimbs.armR.rotation.x = swing * 0.7;
+  }
+
+  if (isWalking) {
+    audio.stepAccumulator += dt;
+    if (audio.stepAccumulator >= 0.42) {
+      audio.stepAccumulator = 0;
+      audio.playFootstep();
+    }
+  } else {
+    audio.stepAccumulator = 0.38;
+  }
+
+  // 3. Smooth 3rd-Person Follow Camera behind the Character
+  const charHead = characterPivot.position.clone().add(new THREE.Vector3(0, 1.45, 0));
+  if (followCamEnabled) {
+    const camOffset = new THREE.Vector3(
+      -Math.sin(characterPivot.rotation.y) * 4.2,
+      2.15,
+      -Math.cos(characterPivot.rotation.y) * 4.2
+    );
+    const desiredCamPos = characterPivot.position.clone().add(camOffset);
+    camera.position.lerp(desiredCamPos, 0.12);
+    controls.target.lerp(charHead, 0.18);
+  }
+  controls.update();
+
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
