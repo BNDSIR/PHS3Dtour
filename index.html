@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#081526" />
 <title>Patkabari High School (H.S.) | 3D Virtual Campus Tour</title>
 <style>
@@ -186,6 +186,89 @@
     .brand h1 { font-size: 12.5px; }
     .brand p { display: none; }
   }
+
+
+  /* ===== Mobile-first, maximum-viewport interface ===== */
+  html, body { min-height: 100%; overscroll-behavior: none; }
+  #viewport, #viewport canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #viewport canvas { touch-action: none; }
+  #labels { display: none; }
+  #labels.labels-visible { display: block; }
+  .topbar { display: none !important; }
+
+  .menu-toggle {
+    position: fixed; z-index: 26; top: max(12px, env(safe-area-inset-top)); left: 12px;
+    display: inline-flex; align-items: center; gap: 9px;
+    min-height: 44px; padding: 8px 14px; border-radius: 13px;
+    border: 1px solid rgba(135,195,245,.34); color: #f3f8ff;
+    background: rgba(7,19,34,.82); backdrop-filter: blur(14px);
+    box-shadow: 0 8px 26px rgba(0,0,0,.32); font: 800 12px "Segoe UI", sans-serif;
+    cursor: pointer; touch-action: manipulation;
+  }
+  .menu-toggle .menu-icon { font-size: 19px; line-height: 1; }
+  .menu-shade {
+    position: fixed; z-index: 19; inset: 0; background: rgba(1,8,16,.30);
+    opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility .2s ease;
+  }
+  .menu-shade.open { opacity: 1; visibility: visible; pointer-events: auto; }
+  .side-panel {
+    position: fixed; z-index: 23; top: max(10px, env(safe-area-inset-top)); bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px; right: auto; width: min(370px, calc(100vw - 20px)); max-height: none;
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
+    overflow: hidden; border-radius: 18px; background: rgba(7,19,34,.96);
+    transform: translateX(calc(-100% - 24px)); opacity: 0; visibility: hidden; pointer-events: none;
+    transition: transform .24s ease, opacity .2s ease, visibility .2s ease;
+  }
+  .side-panel.open { transform: translateX(0); opacity: 1; visibility: visible; pointer-events: auto; }
+  .drawer-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .drawer-brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+  .drawer-brand .brand-badge { flex: 0 0 34px; }
+  .drawer-brand strong { display: block; color: #fff; font-size: 13px; line-height: 1.2; }
+  .drawer-brand small { display: block; color: var(--gold); font-size: 10px; margin-top: 3px; }
+  .drawer-close { width: 38px; height: 38px; border-radius: 10px; color: white; background: rgba(255,255,255,.08); border: 1px solid var(--line); font-size: 20px; cursor: pointer; }
+  .drawer-actions { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px; flex: 0 0 auto; }
+  .drawer-actions .btn { min-height: 38px; padding: 7px 8px; white-space: normal; line-height: 1.2; }
+  .side-panel .info-card { margin: 0; flex: 0 0 auto; }
+  .side-panel .search-input { margin: 0; flex: 0 0 auto; }
+  .side-panel .room-list { min-height: 70px; }
+  .side-panel .btn { touch-action: manipulation; }
+
+  .walk-dock {
+    position: fixed; z-index: 12; left: auto; right: max(10px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom)); transform: none;
+    padding: 7px; border-radius: 15px; gap: 0; background: rgba(7,19,34,.76);
+    border-color: rgba(135,195,245,.25); backdrop-filter: blur(12px);
+    box-shadow: 0 8px 26px rgba(0,0,0,.30);
+  }
+  .walk-hint { display: none !important; }
+  .dpad { grid-template-columns: repeat(4, 42px); grid-template-rows: repeat(2, 39px); gap: 4px; }
+  .walk-btn { min-width: 0; min-height: 38px; padding: 0; border-radius: 9px; font-size: 18px; line-height: 1; }
+
+  .guide-modal { max-height: calc(100dvh - 28px); overflow-y: auto; padding: 19px; }
+  .guide-list { padding-left: 18px; }
+  .start-tour-btn { min-height: 48px; }
+  button:focus-visible, input:focus-visible { outline: 2px solid #68d8ee; outline-offset: 2px; }
+
+  @media (max-width: 760px) {
+    .side-panel { top: max(8px, env(safe-area-inset-top)); bottom: max(8px, env(safe-area-inset-bottom)); left: 8px; width: min(360px, calc(100vw - 16px)); padding: 10px; }
+    .walk-dock { right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); padding: 6px; }
+    .dpad { grid-template-columns: repeat(4, 39px); grid-template-rows: repeat(2, 37px); gap: 3px; }
+    .walk-btn { min-height: 36px; font-size: 17px; }
+    .menu-toggle { top: max(8px, env(safe-area-inset-top)); left: 8px; min-height: 42px; }
+    .guide-modal { padding: 16px; }
+    .guide-modal h2 { font-size: 18px; }
+    .guide-list { font-size: 12px; line-height: 1.55; }
+  }
+  @media (max-width: 380px) {
+    .dpad { grid-template-columns: repeat(4, 35px); grid-template-rows: repeat(2, 35px); gap: 3px; }
+    .walk-btn { min-height: 34px; }
+  }
+  @media (max-height: 480px) and (orientation: landscape) {
+    .walk-dock { right: max(8px, env(safe-area-inset-right)); bottom: max(6px, env(safe-area-inset-bottom)); }
+    .side-panel { max-height: calc(100dvh - 16px); }
+    .guide-modal { max-height: calc(100dvh - 16px); }
+  }
+
 </style>
 
 <script type="importmap">
@@ -202,33 +285,37 @@
 <div id="viewport"></div>
 <div id="labels"></div>
 
-<!-- Top Public Navigation & Sound Controls -->
-<header class="topbar">
-  <div class="brand">
-    <div class="brand-badge">🏫</div>
-    <div>
-      <h1>PATKABARI HIGH SCHOOL (H.S.) · পাটিকাবাড়ী উচ্চ বিদ্যালয়</h1>
-      <p>3D Animated Character Walkthrough & Room Locator</p>
+<!-- One compact menu button; all navigation and information panels are hidden until opened. -->
+<button class="menu-toggle" id="btnMenu" type="button" aria-label="Open campus tour menu" aria-expanded="false" aria-controls="sidePanel">
+  <span class="menu-icon">☰</span><span>পাটিকাবাড়ী · Menu</span>
+</button>
+<div class="menu-shade" id="menuShade"></div>
+
+<aside class="side-panel" id="sidePanel" aria-label="Campus tour menu" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-brand">
+      <div class="brand-badge">🏫</div>
+      <div><strong>PATKABARI HIGH SCHOOL (H.S.)</strong><small>3D Virtual Campus Tour · বিদ্যালয় ভ্রমণ</small></div>
     </div>
+    <button class="drawer-close" id="btnMenuClose" type="button" aria-label="Close menu">×</button>
   </div>
-  <div class="top-actions">
-    <button class="btn active" id="btnSpawnGate">⛩️ Main Gate</button>
+
+  <div class="drawer-actions">
+    <button class="btn active" id="btnSpawnGate" title="Return to the starting view opposite the main gate">🏫 Tour Start</button>
     <button class="btn" data-floor="0">নিচতলা (G-Fl)</button>
     <button class="btn" data-floor="1">দোতলা (1st Fl)</button>
     <button class="btn" data-floor="2">তিনতলা (2nd Fl)</button>
     <button class="btn active" id="btnCamMode">🎥 Follow Cam</button>
     <button class="btn active" id="btnMusic">🎵 Music: ON</button>
     <button class="btn active" id="btnFootsteps">👣 Steps: ON</button>
-    <button class="btn gold" id="btnGuide">📖 নির্দেশিকা (Guide)</button>
+    <button class="btn" id="btnLabels">🏷️ Labels: OFF</button>
+    <button class="btn gold" id="btnGuide" style="grid-column:1 / -1;">📖 নির্দেশিকা (Guide)</button>
   </div>
-</header>
 
-<!-- Right Public Room Locator -->
-<aside class="side-panel" id="sidePanel">
   <div class="info-card">
     <div class="kicker" id="infoFloor">MAIN GATE · প্রধান প্রবেশদ্বার</div>
     <h2 id="infoTitle">Patkabari High School (H.S.)</h2>
-    <p id="infoDesc">প্রধান গেট থেকে যাত্রা শুরু হয়েছে। নিচের বাটন চেপে চরিত্রটিকে বারান্দা বা যেকোনো কক্ষের সামনে হাঁটিয়ে নিয়ে যান।</p>
+    <p id="infoDesc">বিদ্যালয়ের 3D ক্যাম্পাস ঘুরে দেখুন।</p>
     <div style="margin-top:8px; display:flex; gap:6px;">
       <button class="btn gold" id="btnWalkCharHere" style="width:100%;">🚶 এই কক্ষের সামনে যান (Walk Here)</button>
     </div>
@@ -238,35 +325,31 @@
   <div class="room-list" id="roomList"></div>
 </aside>
 
-<!-- Bottom Character Movement Controller -->
-<section class="walk-dock">
-  <div class="walk-hint">
-    <strong>চরিত্র নিয়ন্ত্রণ (Character Control)</strong>
-    হাঁটার জন্য নিচের বাটন চাপুন অথবা কীবোর্ডের <b>W A S D / Arrow Keys</b> ব্যবহার করুন।
-  </div>
+<!-- Compact floating movement pad; it overlays only a small corner of the 3D view. -->
+<section class="walk-dock" aria-label="Character movement controls">
   <div class="dpad">
-    <button class="walk-btn" data-mv="turnL" title="বাঁদিকে ঘুরুন">⟲ Turn L</button>
-    <button class="walk-btn" data-mv="fwd"   title="সামনে হাঁটুন">▲ Fwd</button>
-    <button class="walk-btn" data-mv="turnR" title="ডানদিকে ঘুরুন">⟳ Turn R</button>
-    <button class="walk-btn" data-mv="up"    title="উপরের তলায় যান">▲ Up Flr</button>
-    <button class="walk-btn" data-mv="left"  title="বাঁয়ে সরুন">◄ Left</button>
-    <button class="walk-btn" data-mv="back"  title="পিছনে হাঁটুন">▼ Back</button>
-    <button class="walk-btn" data-mv="right" title="ডানে সরুন">► Right</button>
-    <button class="walk-btn" data-mv="down"  title="নিচের তলায় যান">▼ Dn Flr</button>
+    <button class="walk-btn" data-mv="turnL" title="বাঁদিকে ঘুরুন" aria-label="Turn left">↶</button>
+    <button class="walk-btn" data-mv="fwd" title="সামনে হাঁটুন" aria-label="Walk forward">↑</button>
+    <button class="walk-btn" data-mv="turnR" title="ডানদিকে ঘুরুন" aria-label="Turn right">↷</button>
+    <button class="walk-btn" data-mv="up" title="উপরের তলায় যান" aria-label="Go up one floor">⇧</button>
+    <button class="walk-btn" data-mv="left" title="বাঁয়ে সরুন" aria-label="Move left">←</button>
+    <button class="walk-btn" data-mv="back" title="পিছনে হাঁটুন" aria-label="Walk backward">↓</button>
+    <button class="walk-btn" data-mv="right" title="ডানে সরুন" aria-label="Move right">→</button>
+    <button class="walk-btn" data-mv="down" title="নিচের তলায় যান" aria-label="Go down one floor">⇩</button>
   </div>
 </section>
 
 <!-- Public Bengali/English User Guide & Audio Unlock Modal -->
-<div class="modal-backdrop" id="guideModal">
+<div class="modal-backdrop" id="guideModal" style="display:none;">
   <div class="guide-modal">
     <h2>পাটিকাবাড়ী উচ্চ বিদ্যালয় (উঃ মাঃ) · 3D ভ্রমণ নির্দেশিকা</h2>
     <div class="sub">PATKABARI HIGH SCHOOL (H.S.) · Interactive 3D Character Tour</div>
     <ul class="guide-list">
-      <li><b>গেট থেকে শুরু (Start from Main Gate):</b> আপনার 3D অ্যানিমেটেড চরিত্রটি বিদ্যালয়ের প্রধান গেটের সামনে প্রস্তুত আছে।</li>
-      <li><b>হাঁটাচলা (Character Walking):</b> স্ক্রিনের নিচের <b>▲ Fwd, ▼ Back, ◄ Left, ► Right</b> বাটন চেপে ধরে রাখলে (অথবা কীবোর্ডের <b>W, A, S, D / Arrow Keys</b> চাপলে) চরিত্রটি হাঁটবে এবং পায়ের হাঁটার শব্দ (Walking Sound) শোনা যাবে।</li>
-      <li><b>তলা পরিবর্তন (Climb Floors):</b> সিঁড়ি বা যেকোনো স্থান থেকে <b>▲ Up Flr / ▼ Dn Flr</b> বা উপরের <b>নিচতলা / দোতলা / তিনতলা</b> বাটনে চাপ দিয়ে তলা পরিবর্তন করা যাবে।</li>
-      <li><b>কক্ষ খোঁজা (Room Locator):</b> ডানদিকের তালিকা থেকে যেকোনো কক্ষ, ল্যাব, অফিস বা বাথরুমে ক্লিক করে <b>"🚶 এই কক্ষের সামনে যান"</b> চাপলে চরিত্রটি সেখানে পৌঁছে যাবে।</li>
-      <li><b>মিষ্টি আবহ সঙ্গীত (Background Music):</b> ভ্রমণের সময় মৃদু আবহ সঙ্গীত বাজবে, যা উপরের <b>🎵 Music</b> বাটন দিয়ে নিয়ন্ত্রণ করা যাবে।</li>
+      <li><b>ক্যাম্পাসের দূর প্রান্ত থেকে শুরু:</b> চরিত্রটি প্রধান গেটের বিপরীত দিকে থাকবে, যাতে ক্যাম্পাসের দৃশ্য ও গেটের দিক একসঙ্গে দেখা যায়।</li>
+      <li><b>হাঁটাচলা (Character Walking):</b> নিচের ডানদিকের ছোট দিক-নিয়ন্ত্রণ বাটন চেপে ধরে রাখুন, অথবা কীবোর্ডের <b>W, A, S, D / Arrow Keys</b> ব্যবহার করুন। থামলে চরিত্রটি ক্যামেরার দিকে মুখ ঘুরিয়ে নেবে।</li>
+      <li><b>তলা পরিবর্তন (Climb Floors):</b> সিঁড়ি বা যেকোনো স্থান থেকে <b>▲ Up Flr / ▼ Dn Flr</b> বা Menu-র <b>নিচতলা / দোতলা / তিনতলা</b> বাটনে চাপ দিয়ে তলা পরিবর্তন করা যাবে।</li>
+      <li><b>মেনু ও কক্ষ খোঁজা (Menu & Room Locator):</b> উপরের <b>☰ Menu</b> চাপলে কক্ষের তালিকা, তলা পরিবর্তন, ক্যামেরা, সঙ্গীত ও লেবেল নিয়ন্ত্রণ খুলবে। তালিকা থেকে কক্ষ বেছে <b>Walk Here</b> চাপুন।</li>
+      <li><b>আবহ সঙ্গীত ও লেবেল:</b> Menu থেকে নতুন মৌলিক বাঁশি-অনুপ্রাণিত সুর, পায়ের শব্দ এবং 3D নামফলক চালু বা বন্ধ করুন। নামফলক শুরুতে লুকানো থাকবে।</li>
     </ul>
     <div class="load-progress" id="loadStatusText">
       ⏳ Loading <b>school.glb</b> &amp; animated <b>character.fbx</b>…
@@ -293,9 +376,12 @@ const $ = id => document.getElementById(id);
 const SCHOOL_GLB_CANDIDATES = ['./school.glb', './patkabari_school_full.glb', './school_model.glb'];
 const CHARACTER_FBX_CANDIDATES = ['./character.fbx', './walk.fbx', './boy.fbx', './aj.fbx'];
 
-// Starting position right outside Patkabari High School Main Gate
-const GATE_START_POS = new THREE.Vector3(-25.0, 0.0, 0.0);
-const GATE_START_ROT_Y = Math.PI / 2; // Facing East into the courtyard
+// Updated after loading the GLB: the character starts well away from the real gate.
+const GATE_FALLBACK_POS = new THREE.Vector3(-25.0, 0.0, 0.0);
+const CAMPUS_START_POS = new THREE.Vector3(-42.0, 0.0, -4.1);
+const CAMPUS_START_YAW = -Math.PI / 2; // Face the viewer; the main gate is behind the character in the distance.
+let gateWorldPosition = new THREE.Vector3(32.63, 0, -4.09);
+let gateDirectionX = 1;
 
 // ============================================================================
 // 2. WEB AUDIO SYNTHESIZER: SWEET PENTATONIC BGM + REALISTIC FOOTSTEPS
@@ -303,86 +389,149 @@ const GATE_START_ROT_Y = Math.PI / 2; // Facing East into the courtyard
 class SchoolAudioEngine {
   constructor() {
     this.ctx = null;
+    this.master = null;
+    this.musicBus = null;
+    this.stepBus = null;
     this.musicEnabled = true;
     this.stepsEnabled = true;
     this.bgmTimer = null;
     this.stepAccumulator = 0;
     this.noteIdx = 0;
-    // Sweet Indian Pentatonic Scale (Raag Bhupali / Deshkar: Sa Re Ga Pa Dha Sa)
-    this.melody = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66];
+    this.droneStarted = false;
+    // Original melody built around a warm pentatonic / Bhupali-like colour.
+    this.melody = [
+      523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440.00,
+      523.25, 587.33, 659.25, 587.33, 523.25, 440.00, 392.00, 440.00,
+      523.25, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25,
+      440.00, 523.25, 587.33, 523.25, 440.00, 392.00, 329.63, 392.00
+    ];
   }
 
   init() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
       this.ctx = new AudioCtx();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.72;
+      this.master.connect(this.ctx.destination);
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.gain.value = this.musicEnabled ? 0.42 : 0;
+      this.musicBus.connect(this.master);
+      this.stepBus = this.ctx.createGain();
+      this.stepBus.gain.value = 0.55;
+      this.stepBus.connect(this.master);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
+    this.updateMusicGain();
     this.startSweetBGM();
   }
 
+  updateMusicGain() {
+    if (!this.ctx || !this.musicBus) return;
+    const now = this.ctx.currentTime;
+    this.musicBus.gain.cancelScheduledValues(now);
+    this.musicBus.gain.setTargetAtTime(this.musicEnabled ? 0.42 : 0, now, 0.22);
+  }
+
+  startDrone() {
+    if (!this.ctx || this.droneStarted) return;
+    this.droneStarted = true;
+    const now = this.ctx.currentTime;
+    [
+      { f: 130.81, gain: 0.010 },
+      { f: 196.00, gain: 0.006 },
+      { f: 261.63, gain: 0.0035 }
+    ].forEach((tone, i) => {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = i === 1 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(tone.f, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(tone.gain, now + 2.6);
+      osc.connect(g); g.connect(this.musicBus);
+      osc.start(now);
+    });
+  }
+
+  playFlute(freq, when, duration = 0.82) {
+    const osc = this.ctx.createOscillator();
+    const overtone = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const vibrato = this.ctx.createOscillator();
+    const vibratoGain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, when);
+    overtone.type = 'triangle';
+    overtone.frequency.setValueAtTime(freq * 2, when);
+    vibrato.frequency.setValueAtTime(5.1, when);
+    vibratoGain.gain.setValueAtTime(1.3, when);
+    vibrato.connect(vibratoGain); vibratoGain.connect(osc.frequency);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(0.027, when + 0.10);
+    gain.gain.setValueAtTime(0.021, when + Math.max(0.14, duration - 0.20));
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+    osc.connect(gain); overtone.connect(gain); gain.connect(this.musicBus);
+    osc.start(when); overtone.start(when); vibrato.start(when);
+    osc.stop(when + duration + 0.04); overtone.stop(when + duration + 0.04); vibrato.stop(when + duration + 0.04);
+  }
+
+  playPluck(freq, when) {
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, when);
+    filter.type = 'lowpass'; filter.frequency.setValueAtTime(1500, when);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(0.012, when + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.48);
+    osc.connect(filter); filter.connect(gain); gain.connect(this.musicBus);
+    osc.start(when); osc.stop(when + 0.5);
+  }
+
+  playBell(freq, when) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(freq, when);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(0.009, when + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 1.1);
+    osc.connect(gain); gain.connect(this.musicBus);
+    osc.start(when); osc.stop(when + 1.12);
+  }
+
   startSweetBGM() {
-    if (this.bgmTimer) return;
+    if (this.bgmTimer || !this.ctx) return;
+    this.startDrone();
+    const stepMs = 570;
     const playNextNote = () => {
       if (!this.musicEnabled || !this.ctx || this.ctx.state !== 'running') return;
-      const now = this.ctx.currentTime;
-      const freq = this.melody[this.noteIdx % this.melody.length];
+      const now = this.ctx.currentTime + 0.025;
+      const i = this.noteIdx % this.melody.length;
+      const freq = this.melody[i];
+      this.playFlute(freq, now, 0.78);
+      if (i % 4 === 0) this.playPluck([130.81, 196.00, 261.63, 196.00][(i / 4) % 4], now);
+      if (i % 8 === 0) this.playBell([783.99, 659.25, 880.00, 783.99][(i / 8) % 4], now + 0.08);
       this.noteIdx++;
-
-      // Soft Bansuri Flute Sine-Triangle Harmonic Voice
-      const osc = this.ctx.createOscillator();
-      const sub = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
-      sub.type = 'triangle';
-      sub.frequency.setValueAtTime(freq * 0.5, now);
-
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(0.035, now + 0.35);
-      gain.gain.exponentialRampToValueAtTime(0.0008, now + 1.65);
-
-      osc.connect(gain);
-      sub.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start(now);
-      sub.start(now);
-      osc.stop(now + 1.7);
-      sub.stop(now + 1.7);
     };
     playNextNote();
-    this.bgmTimer = setInterval(playNextNote, 1450);
+    this.bgmTimer = setInterval(playNextNote, stepMs);
   }
 
   playFootstep() {
     if (!this.stepsEnabled || !this.ctx || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
-
-    // Short filtered noise burst + low heel thump for realistic shoe step
-    const bufferSize = this.ctx.sampleRate * 0.065;
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.065);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
-    }
-
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = buffer;
-
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+    const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(720 + Math.random() * 160, now);
-    filter.Q.setValueAtTime(2.2, now);
-
+    filter.type = 'bandpass'; filter.frequency.setValueAtTime(720 + Math.random() * 160, now); filter.Q.setValueAtTime(2.2, now);
     const stepGain = this.ctx.createGain();
-    stepGain.gain.setValueAtTime(0.11, now);
-    stepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
-
-    noise.connect(filter);
-    filter.connect(stepGain);
-    stepGain.connect(this.ctx.destination);
+    stepGain.gain.setValueAtTime(0.085, now); stepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+    noise.connect(filter); filter.connect(stepGain); stepGain.connect(this.stepBus || this.ctx.destination);
     noise.start(now);
   }
 }
@@ -395,10 +544,10 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x88b8de);
 scene.fog = new THREE.FogExp2(0x88b8de, 0.005);
 
-const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 350);
+const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 450);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, matchMedia('(max-width: 760px)').matches ? 1.5 : 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -413,7 +562,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.maxPolarAngle = Math.PI * 0.49;
 controls.minDistance = 1.8;
-controls.maxDistance = 65;
+controls.maxDistance = 95;
 
 // Warm Bengal Daylight
 scene.add(new THREE.HemisphereLight(0xffffff, 0xc9b28b, 1.25));
@@ -481,7 +630,8 @@ function buildFallbackSchoolIfNoGLB() {
   }
   box(0.68, 0.55, 6.1, -25, 3.75, 0, matStone);
   box(1.5, 0.28, 6.8, -25, 4.65, 0, matStone);
-  registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, new THREE.Vector3(-25, 4.2, 0));
+  gateWorldPosition.copy(GATE_FALLBACK_POS);
+  registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, GATE_FALLBACK_POS.clone().add(new THREE.Vector3(0, 4.2, 0)));
 
   // Main Academic Wing (North) & Opposite South Wing
   const wings = [
@@ -523,8 +673,8 @@ function buildFallbackSchoolIfNoGLB() {
 // 5. ANIMATED CHARACTER CONTROLLER (AUTOLOADS MIXAMO FBX + FALLBACK AVATAR)
 // ============================================================================
 const characterPivot = new THREE.Group();
-characterPivot.position.copy(GATE_START_POS);
-characterPivot.rotation.y = GATE_START_ROT_Y;
+characterPivot.position.copy(CAMPUS_START_POS);
+characterPivot.rotation.y = CAMPUS_START_YAW;
 scene.add(characterPivot);
 
 let charMixer = null;
@@ -584,8 +734,16 @@ async function autoLoadSchoolAndCharacter() {
       campusRoot.add(gltf.scene);
       schoolLoaded = true;
 
-      // Extract any 3D signboards or Room_ meshes from the uploaded school.glb for the Room Locator
-      registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, new THREE.Vector3(-25, 4.2, 0));
+      // Find the actual gate node in school.glb (rather than using the old placeholder coordinate).
+      gltf.scene.updateMatrixWorld(true);
+      const realGateNode = gltf.scene.getObjectByName('Patkabari_Main_Gate') || gltf.scene.getObjectByName('Gate_Top_Rail');
+      if (realGateNode) {
+        realGateNode.getWorldPosition(gateWorldPosition);
+      } else {
+        gateWorldPosition.set(32.63, 0, -4.09);
+      }
+      gateWorldPosition.y = 0;
+      registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, gateWorldPosition.clone().add(new THREE.Vector3(0, 5.2, 0)));
       gltf.scene.traverse(obj => {
         if (obj.isMesh) {
           obj.castShadow = true; obj.receiveShadow = true;
@@ -646,9 +804,23 @@ async function autoLoadSchoolAndCharacter() {
     createFallbackStudentAvatar();
   }
 
+  // Spawn at the far opposite edge of the campus, using the real gate's X coordinate.
+  gateDirectionX = gateWorldPosition.x >= 0 ? 1 : -1;
+  CAMPUS_START_POS.set(-gateDirectionX * 42.0, 0, gateWorldPosition.z);
+  // Face away from the gate and toward the initial camera, so the character is front-facing at rest.
+  const welcomingYaw = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
+  characterPivot.position.copy(CAMPUS_START_POS);
+  characterPivot.rotation.y = welcomingYaw;
+  autoWalkDestination = null;
+  const initialHead = CAMPUS_START_POS.clone().add(new THREE.Vector3(0, 1.38, 0));
+  camera.position.copy(CAMPUS_START_POS).add(new THREE.Vector3(-gateDirectionX * 11.5, 4.0, 1.2));
+  camera.lookAt(initialHead);
+  controls.target.copy(initialHead);
+  controls.update();
+
   renderRoomList();
   selectLandmark('GATE', false);
-  $('loadStatusText').innerHTML = `✔ <b>Campus &amp; Animated Character Ready!</b> Starting at Main Gate.`;
+  $('loadStatusText').innerHTML = `✔ <b>Campus &amp; Animated Character Ready!</b> Starting from the far side of the campus.`;
 }
 
 // ============================================================================
@@ -703,11 +875,33 @@ $('btnWalkCharHere').addEventListener('click', () => {
 
 $('searchRoom').addEventListener('input', e => renderRoomList(e.target.value));
 
+function openMenu() {
+  // The first deliberate tap unlocks Web Audio on mobile browsers.
+  if (!audio.ctx && audio.musicEnabled) audio.init();
+  $('sidePanel').classList.add('open');
+  $('menuShade').classList.add('open');
+  $('sidePanel').setAttribute('aria-hidden', 'false');
+  $('btnMenu').setAttribute('aria-expanded', 'true');
+}
+function closeMenu() {
+  $('sidePanel').classList.remove('open');
+  $('menuShade').classList.remove('open');
+  $('sidePanel').setAttribute('aria-hidden', 'true');
+  $('btnMenu').setAttribute('aria-expanded', 'false');
+}
+$('btnMenu').addEventListener('click', () => {
+  if ($('sidePanel').classList.contains('open')) closeMenu(); else openMenu();
+});
+$('btnMenuClose').addEventListener('click', closeMenu);
+$('menuShade').addEventListener('click', closeMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
 $('btnSpawnGate').addEventListener('click', () => {
   autoWalkDestination = null;
-  characterPivot.position.copy(GATE_START_POS);
-  characterPivot.rotation.y = GATE_START_ROT_Y;
+  characterPivot.position.copy(CAMPUS_START_POS);
+  characterPivot.rotation.y = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
   selectLandmark('GATE', false);
+  closeMenu();
 });
 
 document.querySelectorAll('[data-floor]').forEach(btn => {
@@ -715,7 +909,8 @@ document.querySelectorAll('[data-floor]').forEach(btn => {
     autoWalkDestination = null;
     const flr = Number(btn.dataset.floor);
     characterPivot.position.set(-12, flr * 3.6, -13.2);
-    characterPivot.rotation.y = Math.PI / 2;
+    characterPivot.rotation.y = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
+    closeMenu();
   });
 });
 
@@ -726,10 +921,19 @@ $('btnCamMode').addEventListener('click', () => {
 });
 
 $('btnMusic').addEventListener('click', () => {
-  audio.init();
-  audio.musicEnabled = !audio.musicEnabled;
+  // The first tap unlocks browser audio and starts the tour music; later taps toggle it.
+  if (!audio.ctx) { audio.musicEnabled = true; audio.init(); }
+  else { audio.musicEnabled = !audio.musicEnabled; audio.updateMusicGain(); }
   $('btnMusic').classList.toggle('active', audio.musicEnabled);
   $('btnMusic').textContent = audio.musicEnabled ? '🎵 Music: ON' : '🎵 Music: OFF';
+});
+
+let labelsVisible = false;
+$('btnLabels').addEventListener('click', () => {
+  labelsVisible = !labelsVisible;
+  $('labels').classList.toggle('labels-visible', labelsVisible);
+  $('btnLabels').classList.toggle('active', labelsVisible);
+  $('btnLabels').textContent = labelsVisible ? '🏷️ Labels: ON' : '🏷️ Labels: OFF';
 });
 
 $('btnFootsteps').addEventListener('click', () => {
@@ -740,6 +944,7 @@ $('btnFootsteps').addEventListener('click', () => {
 });
 
 $('btnGuide').addEventListener('click', () => {
+  closeMenu();
   $('guideModal').style.display = 'flex';
 });
 
@@ -766,7 +971,10 @@ document.querySelectorAll('.walk-btn').forEach(btn => {
   btn.addEventListener('pointerdown', start);
   btn.addEventListener('pointerup', end);
   btn.addEventListener('pointerleave', end);
+  btn.addEventListener('pointercancel', end);
+  btn.addEventListener('lostpointercapture', end);
 });
+window.addEventListener('blur', () => { Object.keys(mv).forEach(k => mv[k] = false); document.querySelectorAll('.walk-btn').forEach(b => b.classList.remove('pressed')); });
 
 window.addEventListener('keydown', e => {
   if (document.activeElement.tagName === 'INPUT') return;
@@ -788,12 +996,17 @@ window.addEventListener('keyup', e => {
   if (e.key === 'e' || e.key === 'E')         mv.right = false;
 });
 
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
+function resizeTour() {
+  const w = window.visualViewport ? Math.round(window.visualViewport.width) : window.innerWidth;
+  const h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
+  camera.aspect = w / Math.max(h, 1);
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  labelRenderer.setSize(innerWidth, innerHeight);
-});
+  renderer.setSize(w, h, false);
+  labelRenderer.setSize(w, h);
+}
+window.addEventListener('resize', resizeTour, { passive: true });
+window.addEventListener('orientationchange', () => setTimeout(resizeTour, 120), { passive: true });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeTour, { passive: true });
 
 // ============================================================================
 // 7. MAIN ANIMATION LOOP (CHARACTER WALKING, MIXAMO SKELETON & FOOTSTEP SOUND)
@@ -864,17 +1077,29 @@ function animate() {
     audio.stepAccumulator = 0.38;
   }
 
-  // 3. Smooth 3rd-Person Follow Camera behind the Character
-  const charHead = characterPivot.position.clone().add(new THREE.Vector3(0, 1.45, 0));
-  if (followCamEnabled) {
-    const camOffset = new THREE.Vector3(
-      -Math.sin(characterPivot.rotation.y) * 4.2,
-      2.15,
-      -Math.cos(characterPivot.rotation.y) * 4.2
-    );
-    const desiredCamPos = characterPivot.position.clone().add(camOffset);
-    camera.position.lerp(desiredCamPos, 0.12);
-    controls.target.lerp(charHead, 0.18);
+  // 3. Camera follows from behind while walking or turning. When fully idle,
+  // it stays in place and the character smoothly turns toward the viewer/camera.
+  const isTurning = mv.turnL || mv.turnR;
+  const charHead = characterPivot.position.clone().add(new THREE.Vector3(0, 1.42, 0));
+  if (isWalking || isTurning) {
+    if (followCamEnabled) {
+      const camOffset = new THREE.Vector3(
+        -Math.sin(characterPivot.rotation.y) * 5.4,
+        2.55,
+        -Math.cos(characterPivot.rotation.y) * 5.4
+      );
+      const desiredCamPos = characterPivot.position.clone().add(camOffset);
+      camera.position.lerp(desiredCamPos, 0.11);
+      controls.target.lerp(charHead, 0.15);
+    }
+  } else {
+    const toViewer = new THREE.Vector3(camera.position.x - characterPivot.position.x, 0, camera.position.z - characterPivot.position.z);
+    if (toViewer.lengthSq() > 0.001) {
+      const desiredYaw = Math.atan2(toViewer.x, toViewer.z);
+      const yawDelta = THREE.MathUtils.euclideanModulo(desiredYaw - characterPivot.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
+      characterPivot.rotation.y += yawDelta * Math.min(1, dt * 4.5);
+    }
+    controls.target.lerp(charHead, 0.10);
   }
   controls.update();
 
