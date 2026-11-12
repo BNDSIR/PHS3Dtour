@@ -194,6 +194,16 @@
   #viewport canvas { touch-action: none; }
   #labels { display: none; }
   #labels.labels-visible { display: block; }
+  .hello-bubble {
+    position: fixed; z-index: 16; display: none; pointer-events: none;
+    transform: translate(-50%, -100%); white-space: nowrap;
+    padding: 8px 14px; border-radius: 14px 14px 14px 4px;
+    color: #071320; background: linear-gradient(135deg, #fff4c6, #f6c453);
+    border: 1px solid rgba(255,255,255,.8); box-shadow: 0 7px 22px rgba(0,0,0,.28);
+    font: 900 14px/1.2 "Segoe UI", "Nirmala UI", sans-serif;
+  }
+  .hello-bubble.show { display: block; animation: helloPop .22s ease-out; }
+  @keyframes helloPop { from { opacity: 0; transform: translate(-50%, -85%) scale(.9); } to { opacity: 1; transform: translate(-50%, -100%) scale(1); } }
   .topbar { display: none !important; }
 
   .menu-toggle {
@@ -284,6 +294,7 @@
 
 <div id="viewport"></div>
 <div id="labels"></div>
+<div class="hello-bubble" id="helloBubble" role="status" aria-live="polite">Hi! নমস্কার!</div>
 
 <!-- One compact menu button; all navigation and information panels are hidden until opened. -->
 <button class="menu-toggle" id="btnMenu" type="button" aria-label="Open campus tour menu" aria-expanded="false" aria-controls="sidePanel">
@@ -301,7 +312,7 @@
   </div>
 
   <div class="drawer-actions">
-    <button class="btn active" id="btnSpawnGate" title="Return to the starting view opposite the main gate">🏫 Tour Start</button>
+    <button class="btn active" id="btnSpawnGate" title="Return to the starting view in front of the main gate">🏫 Tour Start</button>
     <button class="btn" data-floor="0">নিচতলা (G-Fl)</button>
     <button class="btn" data-floor="1">দোতলা (1st Fl)</button>
     <button class="btn" data-floor="2">তিনতলা (2nd Fl)</button>
@@ -345,8 +356,9 @@
     <h2>পাটিকাবাড়ী উচ্চ বিদ্যালয় (উঃ মাঃ) · 3D ভ্রমণ নির্দেশিকা</h2>
     <div class="sub">PATKABARI HIGH SCHOOL (H.S.) · Interactive 3D Character Tour</div>
     <ul class="guide-list">
-      <li><b>ক্যাম্পাসের দূর প্রান্ত থেকে শুরু:</b> চরিত্রটি প্রধান গেটের বিপরীত দিকে থাকবে, যাতে ক্যাম্পাসের দৃশ্য ও গেটের দিক একসঙ্গে দেখা যায়।</li>
-      <li><b>হাঁটাচলা (Character Walking):</b> নিচের ডানদিকের ছোট দিক-নিয়ন্ত্রণ বাটন চেপে ধরে রাখুন, অথবা কীবোর্ডের <b>W, A, S, D / Arrow Keys</b> ব্যবহার করুন। থামলে চরিত্রটি ক্যামেরার দিকে মুখ ঘুরিয়ে নেবে।</li>
+      <li><b>প্রধান গেটের সামনে শুরু:</b> চরিত্রটি GLB মডেলের আসল প্রধান গেটের সামনে দাঁড়াবে, আর ক্যামেরা পুরো গেটটি দেখাবে।</li>
+      <li><b>হাঁটাচলা (Character Walking):</b> নিচের ডানদিকের দিক-নিয়ন্ত্রণ বাটন চেপে ধরুন। সামনে (↑) চাপলে চরিত্রটি আপনার কাছ থেকে দূরে, গেটের দিকে এগোবে। বাঁ / ডান / পিছনের বোতামে চরিত্রটি সেই দিকেই মুখ ঘুরিয়ে হাঁটবে।</li>
+      <li><b>নমস্কার (Idle Greeting):</b> কিছুক্ষণ কোনো নিয়ন্ত্রণ না করলে চরিত্রটি শুধু তখনই আপনার দিকে ফিরে হাত নেড়ে “Hi! নমস্কার!” বলবে। আবার চললেই সে চলার দিকে মুখ করে নেবে।</li>
       <li><b>তলা পরিবর্তন (Climb Floors):</b> সিঁড়ি বা যেকোনো স্থান থেকে <b>▲ Up Flr / ▼ Dn Flr</b> বা Menu-র <b>নিচতলা / দোতলা / তিনতলা</b> বাটনে চাপ দিয়ে তলা পরিবর্তন করা যাবে।</li>
       <li><b>মেনু ও কক্ষ খোঁজা (Menu & Room Locator):</b> উপরের <b>☰ Menu</b> চাপলে কক্ষের তালিকা, তলা পরিবর্তন, ক্যামেরা, সঙ্গীত ও লেবেল নিয়ন্ত্রণ খুলবে। তালিকা থেকে কক্ষ বেছে <b>Walk Here</b> চাপুন।</li>
       <li><b>আবহ সঙ্গীত ও লেবেল:</b> Menu থেকে নতুন মৌলিক বাঁশি-অনুপ্রাণিত সুর, পায়ের শব্দ এবং 3D নামফলক চালু বা বন্ধ করুন। নামফলক শুরুতে লুকানো থাকবে।</li>
@@ -376,12 +388,17 @@ const $ = id => document.getElementById(id);
 const SCHOOL_GLB_CANDIDATES = ['./school.glb', './patkabari_school_full.glb', './school_model.glb'];
 const CHARACTER_FBX_CANDIDATES = ['./character.fbx', './walk.fbx', './boy.fbx', './aj.fbx'];
 
-// Updated after loading the GLB: the character starts well away from the real gate.
+// Gate geometry is detected from school.glb at load time. These are fallback values only.
 const GATE_FALLBACK_POS = new THREE.Vector3(-25.0, 0.0, 0.0);
-const CAMPUS_START_POS = new THREE.Vector3(-42.0, 0.0, -4.1);
-const CAMPUS_START_YAW = -Math.PI / 2; // Face the viewer; the main gate is behind the character in the distance.
+const CAMPUS_START_POS = new THREE.Vector3(40.6, 0.0, -4.09);
+const GATE_OUTWARD = new THREE.Vector3(1, 0, 0); // Recalculated from the real gate's world orientation.
+const GATE_LOOK_AT = new THREE.Vector3(32.63, 2.55, -4.09);
 let gateWorldPosition = new THREE.Vector3(32.63, 0, -4.09);
-let gateDirectionX = 1;
+let gateWidth = 13.5;
+let gateApproachYaw = -Math.PI / 2;
+let walkHeadingYaw = gateApproachYaw;
+let gateReady = false;
+let tourInteracted = false;
 
 // ============================================================================
 // 2. WEB AUDIO SYNTHESIZER: SWEET PENTATONIC BGM + REALISTIC FOOTSTEPS
@@ -622,7 +639,11 @@ function buildFallbackSchoolIfNoGLB() {
   box(110, 0.4, 90, 0, -0.2, 0, matGnd);
   box(12, 0.3, 5, -4, 0.15, -4, matGrs);
 
-  // Main Gate at (-25, 0, 0)
+  // Main Gate at (-25, 0, 0). The exterior side is toward negative X.
+  gateWorldPosition.copy(GATE_FALLBACK_POS);
+  GATE_OUTWARD.set(-1, 0, 0);
+  gateWidth = 6.8;
+  GATE_LOOK_AT.set(-25, 2.4, 0);
   for (const s of [-1, 1]) {
     const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 4.4, 24), matStone);
     pil.position.set(-25, 2.2, s * 2.35);
@@ -674,12 +695,118 @@ function buildFallbackSchoolIfNoGLB() {
 // ============================================================================
 const characterPivot = new THREE.Group();
 characterPivot.position.copy(CAMPUS_START_POS);
-characterPivot.rotation.y = CAMPUS_START_YAW;
+characterPivot.rotation.y = walkHeadingYaw;
 scene.add(characterPivot);
 
 let charMixer = null;
 let walkAction = null;
 let fallbackLimbs = null;
+let greetingUpperArm = null;
+let greetingForeArm = null;
+let greetingUpperArmBase = null;
+let greetingForeArmBase = null;
+let greetingPhase = 'waiting';
+let greetingPhaseAt = 0;
+let lastActivityAt = performance.now();
+let controlsWereActive = false;
+let greetedForPause = false;
+
+function setGreetingBubble(visible) {
+  $('helloBubble').classList.toggle('show', !!visible);
+}
+
+function findGreetingBones(root) {
+  greetingUpperArm = null;
+  greetingForeArm = null;
+  root.traverse(obj => {
+    if (!obj.isBone) return;
+    const n = obj.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!greetingForeArm && n.includes('rightforearm')) greetingForeArm = obj;
+    if (!greetingUpperArm && n.includes('rightarm') && !n.includes('fore') && !n.includes('hand')) greetingUpperArm = obj;
+  });
+  greetingUpperArmBase = greetingUpperArm ? greetingUpperArm.rotation.clone() : null;
+  greetingForeArmBase = greetingForeArm ? greetingForeArm.rotation.clone() : null;
+}
+
+function restoreGreetingPose() {
+  if (greetingUpperArm && greetingUpperArmBase) greetingUpperArm.rotation.copy(greetingUpperArmBase);
+  if (greetingForeArm && greetingForeArmBase) greetingForeArm.rotation.copy(greetingForeArmBase);
+  if (fallbackLimbs) fallbackLimbs.armR.rotation.set(0, 0, 0);
+}
+
+function updateGreetingPose(elapsed) {
+  const wave = Math.sin(elapsed * 10.5);
+  if (greetingUpperArm && greetingUpperArmBase) {
+    greetingUpperArm.rotation.copy(greetingUpperArmBase);
+    greetingUpperArm.rotation.z += 0.82 + wave * 0.07;
+  }
+  if (greetingForeArm && greetingForeArmBase) {
+    greetingForeArm.rotation.copy(greetingForeArmBase);
+    greetingForeArm.rotation.z += 0.38;
+    greetingForeArm.rotation.y += wave * 0.48;
+  }
+  if (fallbackLimbs) fallbackLimbs.armR.rotation.z = 0.78 + wave * 0.35;
+}
+
+function rotateCharacterTowards(yaw, dt, speed = 7) {
+  const delta = THREE.MathUtils.euclideanModulo(yaw - characterPivot.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
+  characterPivot.rotation.y += delta * Math.min(1, dt * speed);
+  return Math.abs(delta) < 0.055;
+}
+
+function frameGateView() {
+  if (!gateReady) return;
+  const aspect = Math.max(camera.aspect || (innerWidth / Math.max(innerHeight, 1)), 0.25);
+  // A wider vertical FOV in portrait keeps the entire real gate within the phone screen.
+  camera.fov = aspect < 0.85 ? 64 : 52;
+  camera.updateProjectionMatrix();
+  const halfHorizontalFov = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * aspect);
+  const fitDistance = gateWidth / (2 * Math.tan(halfHorizontalFov) * 0.90);
+  const distance = THREE.MathUtils.clamp(Math.max(19, fitDistance + 1.2), 19, 39);
+  camera.position.copy(GATE_LOOK_AT).addScaledVector(GATE_OUTWARD, distance);
+  camera.position.y = GATE_LOOK_AT.y + Math.max(4.8, distance * 0.14);
+  controls.target.copy(GATE_LOOK_AT);
+  camera.lookAt(GATE_LOOK_AT);
+  controls.update();
+}
+
+function placeCharacterAtGate() {
+  // Stand just off the centre line so the avatar does not cover the middle of the gate.
+  const gateSide = new THREE.Vector3(-GATE_OUTWARD.z, 0, GATE_OUTWARD.x).normalize();
+  const sideOffset = Math.min(2.8, gateWidth * 0.20);
+  CAMPUS_START_POS.copy(gateWorldPosition)
+    .addScaledVector(GATE_OUTWARD, 8.5)
+    .addScaledVector(gateSide, sideOffset);
+  CAMPUS_START_POS.y = 0;
+  const toGate = gateWorldPosition.clone().sub(CAMPUS_START_POS).setY(0).normalize();
+  gateApproachYaw = Math.atan2(toGate.x, toGate.z);
+  walkHeadingYaw = gateApproachYaw;
+  characterPivot.position.copy(CAMPUS_START_POS);
+  characterPivot.rotation.y = walkHeadingYaw;
+  autoWalkDestination = null;
+  frameGateView();
+  lastActivityAt = performance.now();
+  greetedForPause = false;
+  greetingPhase = 'waiting';
+  restoreGreetingPose();
+  setGreetingBubble(false);
+}
+
+function positionGreetingBubble() {
+  const bubble = $('helloBubble');
+  const point = characterPivot.position.clone().add(new THREE.Vector3(0, 2.15, 0)).project(camera);
+  if (point.z < -1 || point.z > 1) { bubble.classList.remove('show'); return; }
+  const x = (point.x * 0.5 + 0.5) * innerWidth;
+  const y = (-point.y * 0.5 + 0.5) * innerHeight;
+  bubble.style.left = `${x}px`;
+  bubble.style.top = `${y}px`;
+}
+
+function cancelGreetingForActivity() {
+  greetingPhase = 'waiting';
+  setGreetingBubble(false);
+  restoreGreetingPose();
+}
 
 function createFallbackStudentAvatar() {
   const g = new THREE.Group();
@@ -734,16 +861,33 @@ async function autoLoadSchoolAndCharacter() {
       campusRoot.add(gltf.scene);
       schoolLoaded = true;
 
-      // Find the actual gate node in school.glb (rather than using the old placeholder coordinate).
+      // Locate the complete main-gate group in school.glb and derive its approach side.
       gltf.scene.updateMatrixWorld(true);
-      const realGateNode = gltf.scene.getObjectByName('Patkabari_Main_Gate') || gltf.scene.getObjectByName('Gate_Top_Rail');
+      const realGateNode = gltf.scene.getObjectByName('Patkabari_Main_Gate');
       if (realGateNode) {
-        realGateNode.getWorldPosition(gateWorldPosition);
+        const gateBounds = new THREE.Box3().setFromObject(realGateNode);
+        const gateSize = gateBounds.getSize(new THREE.Vector3());
+        const gateCenter = gateBounds.getCenter(new THREE.Vector3());
+        gateWorldPosition.set(gateCenter.x, 0, gateCenter.z);
+        GATE_LOOK_AT.copy(gateCenter);
+        gateWidth = Math.max(gateSize.x, gateSize.z);
+
+        const campusBounds = new THREE.Box3().setFromObject(gltf.scene);
+        const campusCenter = campusBounds.getCenter(new THREE.Vector3());
+        const gateNormal = realGateNode.getWorldDirection(new THREE.Vector3()).setY(0).normalize();
+        const fromCampusToGate = gateCenter.clone().sub(campusCenter).setY(0);
+        GATE_OUTWARD.copy(gateNormal);
+        if (GATE_OUTWARD.dot(fromCampusToGate) < 0) GATE_OUTWARD.negate();
       } else {
+        // Safe fallback for a differently named GLB gate.
         gateWorldPosition.set(32.63, 0, -4.09);
+        GATE_OUTWARD.set(1, 0, 0);
+        gateWidth = 13.5;
+        GATE_LOOK_AT.set(32.63, 2.55, -4.09);
       }
-      gateWorldPosition.y = 0;
-      registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, gateWorldPosition.clone().add(new THREE.Vector3(0, 5.2, 0)));
+      GATE_LOOK_AT.x = gateWorldPosition.x;
+      GATE_LOOK_AT.z = gateWorldPosition.z;
+      registerLandmark('GATE', 'MAIN GATE', 'Patkabari High School (H.S.)', 'প্রধান প্রবেশদ্বার · ESTD 1944', 0, GATE_LOOK_AT.clone().add(new THREE.Vector3(0, 2.7, 0)));
       gltf.scene.traverse(obj => {
         if (obj.isMesh) {
           obj.castShadow = true; obj.receiveShadow = true;
@@ -786,6 +930,7 @@ async function autoLoadSchoolAndCharacter() {
       });
 
       characterPivot.add(fbx);
+      findGreetingBones(fbx);
 
       if (fbx.animations && fbx.animations.length > 0) {
         const clip = fbx.animations[0];
@@ -804,23 +949,13 @@ async function autoLoadSchoolAndCharacter() {
     createFallbackStudentAvatar();
   }
 
-  // Spawn at the far opposite edge of the campus, using the real gate's X coordinate.
-  gateDirectionX = gateWorldPosition.x >= 0 ? 1 : -1;
-  CAMPUS_START_POS.set(-gateDirectionX * 42.0, 0, gateWorldPosition.z);
-  // Face away from the gate and toward the initial camera, so the character is front-facing at rest.
-  const welcomingYaw = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
-  characterPivot.position.copy(CAMPUS_START_POS);
-  characterPivot.rotation.y = welcomingYaw;
-  autoWalkDestination = null;
-  const initialHead = CAMPUS_START_POS.clone().add(new THREE.Vector3(0, 1.38, 0));
-  camera.position.copy(CAMPUS_START_POS).add(new THREE.Vector3(-gateDirectionX * 11.5, 4.0, 1.2));
-  camera.lookAt(initialHead);
-  controls.target.copy(initialHead);
-  controls.update();
+  // Start just outside the real gate; the camera is framed to include the complete entrance.
+  gateReady = true;
+  placeCharacterAtGate();
 
   renderRoomList();
   selectLandmark('GATE', false);
-  $('loadStatusText').innerHTML = `✔ <b>Campus &amp; Animated Character Ready!</b> Starting from the far side of the campus.`;
+  $('loadStatusText').innerHTML = `✔ <b>Campus &amp; Animated Character Ready!</b> Standing in front of the Main Gate.`;
 }
 
 // ============================================================================
@@ -870,7 +1005,13 @@ function walkCharacterToLandmark(item) {
 
 $('btnWalkCharHere').addEventListener('click', () => {
   const item = ROOM_DIRECTORY.find(r => r.id === activeRoomId);
-  if (item) walkCharacterToLandmark(item);
+  if (item) {
+    cancelGreetingForActivity();
+    lastActivityAt = performance.now();
+    greetedForPause = false;
+    walkCharacterToLandmark(item);
+    closeMenu();
+  }
 });
 
 $('searchRoom').addEventListener('input', e => renderRoomList(e.target.value));
@@ -897,9 +1038,7 @@ $('menuShade').addEventListener('click', closeMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
 $('btnSpawnGate').addEventListener('click', () => {
-  autoWalkDestination = null;
-  characterPivot.position.copy(CAMPUS_START_POS);
-  characterPivot.rotation.y = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
+  placeCharacterAtGate();
   selectLandmark('GATE', false);
   closeMenu();
 });
@@ -909,7 +1048,11 @@ document.querySelectorAll('[data-floor]').forEach(btn => {
     autoWalkDestination = null;
     const flr = Number(btn.dataset.floor);
     characterPivot.position.set(-12, flr * 3.6, -13.2);
-    characterPivot.rotation.y = gateDirectionX > 0 ? -Math.PI / 2 : Math.PI / 2;
+    walkHeadingYaw = gateApproachYaw;
+    characterPivot.rotation.y = walkHeadingYaw;
+    lastActivityAt = performance.now();
+    greetedForPause = false;
+    cancelGreetingForActivity();
     closeMenu();
   });
 });
@@ -953,20 +1096,30 @@ $('btnStartTour').addEventListener('click', () => {
   audio.init();
 });
 
-// Movement Controls (On-screen D-Pad + Keyboard)
+// Movement Controls: forward uses the gate-facing heading, away from the viewer.
 const mv = { fwd:false, back:false, left:false, right:false, turnL:false, turnR:false, up:false, down:false };
+function noteMovementInput() {
+  tourInteracted = true;
+  lastActivityAt = performance.now();
+  greetedForPause = false;
+  cancelGreetingForActivity();
+}
+
 document.querySelectorAll('.walk-btn').forEach(btn => {
   const key = btn.dataset.mv;
   const start = e => {
     e.preventDefault();
     audio.init();
+    noteMovementInput();
     autoWalkDestination = null;
     mv[key] = true;
     btn.classList.add('pressed');
+    try { btn.setPointerCapture(e.pointerId); } catch (_) {}
   };
   const end = () => {
     mv[key] = false;
     btn.classList.remove('pressed');
+    lastActivityAt = performance.now();
   };
   btn.addEventListener('pointerdown', start);
   btn.addEventListener('pointerup', end);
@@ -974,35 +1127,52 @@ document.querySelectorAll('.walk-btn').forEach(btn => {
   btn.addEventListener('pointercancel', end);
   btn.addEventListener('lostpointercapture', end);
 });
-window.addEventListener('blur', () => { Object.keys(mv).forEach(k => mv[k] = false); document.querySelectorAll('.walk-btn').forEach(b => b.classList.remove('pressed')); });
+window.addEventListener('blur', () => {
+  Object.keys(mv).forEach(k => mv[k] = false);
+  document.querySelectorAll('.walk-btn').forEach(b => b.classList.remove('pressed'));
+  lastActivityAt = performance.now();
+});
 
 window.addEventListener('keydown', e => {
-  if (document.activeElement.tagName === 'INPUT') return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  const map = {
+    'w':'fwd','W':'fwd','ArrowUp':'fwd',
+    's':'back','S':'back','ArrowDown':'back',
+    'a':'turnL','A':'turnL','d':'turnR','D':'turnR',
+    'ArrowLeft':'left','q':'left','Q':'left',
+    'ArrowRight':'right','e':'right','E':'right'
+  };
+  const key = map[e.key];
+  if (!key) return;
+  e.preventDefault();
   audio.init();
-  if (['w','W','ArrowUp'].includes(e.key))    { mv.fwd = true; autoWalkDestination = null; }
-  if (['s','S','ArrowDown'].includes(e.key))  { mv.back = true; autoWalkDestination = null; }
-  if (['a','A','ArrowLeft'].includes(e.key))  { mv.turnL = true; autoWalkDestination = null; }
-  if (['d','D','ArrowRight'].includes(e.key)) { mv.turnR = true; autoWalkDestination = null; }
-  if (e.key === 'q' || e.key === 'Q')         { mv.left = true; autoWalkDestination = null; }
-  if (e.key === 'e' || e.key === 'E')         { mv.right = true; autoWalkDestination = null; }
+  if (!mv[key]) noteMovementInput();
+  mv[key] = true;
+  autoWalkDestination = null;
 });
 
 window.addEventListener('keyup', e => {
-  if (['w','W','ArrowUp'].includes(e.key))    mv.fwd = false;
-  if (['s','S','ArrowDown'].includes(e.key))  mv.back = false;
-  if (['a','A','ArrowLeft'].includes(e.key))  mv.turnL = false;
-  if (['d','D','ArrowRight'].includes(e.key)) mv.turnR = false;
-  if (e.key === 'q' || e.key === 'Q')         mv.left = false;
-  if (e.key === 'e' || e.key === 'E')         mv.right = false;
+  const map = {
+    'w':'fwd','W':'fwd','ArrowUp':'fwd',
+    's':'back','S':'back','ArrowDown':'back',
+    'a':'turnL','A':'turnL','d':'turnR','D':'turnR',
+    'ArrowLeft':'left','q':'left','Q':'left',
+    'ArrowRight':'right','e':'right','E':'right'
+  };
+  const key = map[e.key];
+  if (!key) return;
+  mv[key] = false;
+  lastActivityAt = performance.now();
 });
 
 function resizeTour() {
   const w = window.visualViewport ? Math.round(window.visualViewport.width) : window.innerWidth;
   const h = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
   camera.aspect = w / Math.max(h, 1);
-  camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
   labelRenderer.setSize(w, h);
+  if (gateReady && characterPivot.position.distanceTo(CAMPUS_START_POS) < 0.25 && !tourInteracted) frameGateView();
+  else { camera.updateProjectionMatrix(); }
 }
 window.addEventListener('resize', resizeTour, { passive: true });
 window.addEventListener('orientationchange', () => setTimeout(resizeTour, 120), { passive: true });
@@ -1019,42 +1189,69 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
   const walkSpeed = 4.2 * dt;
   const turnSpeed = 2.0 * dt;
+  const now = performance.now();
 
   let isWalking = false;
+  let isTurning = false;
+  const hasManualInput = Object.values(mv).some(Boolean);
+  const wasTravelling = !!autoWalkDestination;
+  const hasActiveInput = hasManualInput || wasTravelling;
 
-  // 1. Handle Auto-Walk to Selected Room or Manual D-Pad / Keyboard Walking
+  // If any movement is in progress, cancel the greeting and restore directional control.
+  if (hasActiveInput) {
+    if (!controlsWereActive) {
+      greetedForPause = false;
+      lastActivityAt = now;
+    }
+    controlsWereActive = true;
+    lastActivityAt = now;
+    cancelGreetingForActivity();
+  } else {
+    if (controlsWereActive) lastActivityAt = now;
+    controlsWereActive = false;
+  }
+
+  // 1. Automatic walk to a room: the character faces the destination and walks toward it.
   if (autoWalkDestination) {
     const toTarget = autoWalkDestination.clone().sub(characterPivot.position);
     toTarget.y = 0;
     if (toTarget.length() > 0.25) {
-      const desiredYaw = Math.atan2(toTarget.x, toTarget.z);
-      characterPivot.rotation.y = desiredYaw;
+      walkHeadingYaw = Math.atan2(toTarget.x, toTarget.z);
+      rotateCharacterTowards(walkHeadingYaw, dt, 9);
       toTarget.normalize();
       characterPivot.position.addScaledVector(toTarget, walkSpeed * 1.25);
       isWalking = true;
     } else {
       autoWalkDestination = null;
+      lastActivityAt = now;
     }
   } else {
-    if (mv.turnL) characterPivot.rotation.y += turnSpeed;
-    if (mv.turnR) characterPivot.rotation.y -= turnSpeed;
+    // Turn buttons rotate the heading in place. Forward/back/left/right move in that heading frame.
+    if (mv.turnL) { walkHeadingYaw += turnSpeed; isTurning = true; }
+    if (mv.turnR) { walkHeadingYaw -= turnSpeed; isTurning = true; }
+    if (isTurning) rotateCharacterTowards(walkHeadingYaw, dt, 12);
 
-    const forward = new THREE.Vector3(
-      Math.sin(characterPivot.rotation.y),
-      0,
-      Math.cos(characterPivot.rotation.y)
-    );
+    const forward = new THREE.Vector3(Math.sin(walkHeadingYaw), 0, Math.cos(walkHeadingYaw));
     const right = new THREE.Vector3(forward.z, 0, -forward.x);
+    const travel = new THREE.Vector3();
+    if (mv.fwd) travel.add(forward);
+    if (mv.back) travel.sub(forward);
+    if (mv.left) travel.addScaledVector(right, -1);
+    if (mv.right) travel.add(right);
 
-    if (mv.fwd)   { characterPivot.position.addScaledVector(forward, walkSpeed);  isWalking = true; }
-    if (mv.back)  { characterPivot.position.addScaledVector(forward, -walkSpeed); isWalking = true; }
-    if (mv.left)  { characterPivot.position.addScaledVector(right, -walkSpeed);   isWalking = true; }
-    if (mv.right) { characterPivot.position.addScaledVector(right, walkSpeed);    isWalking = true; }
-    if (mv.up)    { characterPivot.position.y = Math.min(7.2, characterPivot.position.y + 3.0 * dt); isWalking = true; }
-    if (mv.down)  { characterPivot.position.y = Math.max(0.0, characterPivot.position.y - 3.0 * dt); isWalking = true; }
+    if (travel.lengthSq() > 0.0001) {
+      travel.normalize();
+      // Face the direction actually being travelled, instead of moonwalking or turning to the viewer.
+      walkHeadingYaw = Math.atan2(travel.x, travel.z);
+      rotateCharacterTowards(walkHeadingYaw, dt, 10);
+      characterPivot.position.addScaledVector(travel, walkSpeed);
+      isWalking = true;
+    }
+    if (mv.up) characterPivot.position.y = Math.min(7.2, characterPivot.position.y + 3.0 * dt);
+    if (mv.down) characterPivot.position.y = Math.max(0.0, characterPivot.position.y - 3.0 * dt);
   }
 
-  // 2. Drive Mixamo FBX Walking Animation & Synchronized Footstep Audio
+  // 2. Drive the walk animation and synchronized footsteps.
   if (charMixer && walkAction) {
     walkAction.paused = !isWalking;
     charMixer.update(dt);
@@ -1077,35 +1274,61 @@ function animate() {
     audio.stepAccumulator = 0.38;
   }
 
-  // 3. Camera follows from behind while walking or turning. When fully idle,
-  // it stays in place and the character smoothly turns toward the viewer/camera.
-  const isTurning = mv.turnL || mv.turnR;
   const charHead = characterPivot.position.clone().add(new THREE.Vector3(0, 1.42, 0));
-  if (isWalking || isTurning) {
-    if (followCamEnabled) {
-      const camOffset = new THREE.Vector3(
-        -Math.sin(characterPivot.rotation.y) * 5.4,
-        2.55,
-        -Math.cos(characterPivot.rotation.y) * 5.4
-      );
-      const desiredCamPos = characterPivot.position.clone().add(camOffset);
-      camera.position.lerp(desiredCamPos, 0.11);
-      controls.target.lerp(charHead, 0.15);
-    }
-  } else {
-    const toViewer = new THREE.Vector3(camera.position.x - characterPivot.position.x, 0, camera.position.z - characterPivot.position.z);
-    if (toViewer.lengthSq() > 0.001) {
-      const desiredYaw = Math.atan2(toViewer.x, toViewer.z);
-      const yawDelta = THREE.MathUtils.euclideanModulo(desiredYaw - characterPivot.rotation.y + Math.PI, Math.PI * 2) - Math.PI;
-      characterPivot.rotation.y += yawDelta * Math.min(1, dt * 4.5);
-    }
-    controls.target.lerp(charHead, 0.10);
-  }
-  controls.update();
+  const isUserMoving = isWalking || isTurning || !!autoWalkDestination;
 
+  // 3. Follow from behind the travel direction. Forward always moves away from the viewer.
+  if (followCamEnabled && isUserMoving) {
+    const forwardNow = new THREE.Vector3(Math.sin(walkHeadingYaw), 0, Math.cos(walkHeadingYaw));
+    const desiredCamPos = characterPivot.position.clone().addScaledVector(forwardNow, -6.2).add(new THREE.Vector3(0, 2.65, 0));
+    camera.position.lerp(desiredCamPos, 0.12);
+    controls.target.lerp(charHead, 0.16);
+  } else {
+    controls.target.lerp(charHead, 0.08);
+  }
+
+  // 4. Idle greeting: only after a pause. The character faces the camera and waves briefly,
+  // then returns to the saved travel direction. A new movement input cancels this immediately.
+  if (!isUserMoving && !hasActiveInput && !greetedForPause && now - lastActivityAt > 1750 && greetingPhase === 'waiting') {
+    greetingPhase = 'facing';
+    greetingPhaseAt = now;
+  }
+
+  if (!isUserMoving && !hasActiveInput) {
+    if (greetingPhase === 'facing') {
+      const toViewer = new THREE.Vector3(camera.position.x - characterPivot.position.x, 0, camera.position.z - characterPivot.position.z);
+      if (toViewer.lengthSq() > 0.001) {
+        const viewerYaw = Math.atan2(toViewer.x, toViewer.z);
+        if (rotateCharacterTowards(viewerYaw, dt, 8)) {
+          greetingPhase = 'waving';
+          greetingPhaseAt = now;
+          setGreetingBubble(true);
+        }
+      }
+    } else if (greetingPhase === 'waving') {
+      const toViewer = new THREE.Vector3(camera.position.x - characterPivot.position.x, 0, camera.position.z - characterPivot.position.z);
+      if (toViewer.lengthSq() > 0.001) rotateCharacterTowards(Math.atan2(toViewer.x, toViewer.z), dt, 7);
+      updateGreetingPose((now - greetingPhaseAt) / 1000);
+      if ((now - greetingPhaseAt) > 2300) {
+        greetingPhase = 'returning';
+        greetingPhaseAt = now;
+        setGreetingBubble(false);
+        restoreGreetingPose();
+      }
+    } else if (greetingPhase === 'returning') {
+      if (rotateCharacterTowards(walkHeadingYaw, dt, 7)) {
+        greetingPhase = 'waiting';
+        greetedForPause = true;
+      }
+    }
+  }
+
+  if (greetingPhase === 'waving') positionGreetingBubble();
+  controls.update();
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
 }
+
 animate();
 </script>
 </body>
