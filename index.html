@@ -430,13 +430,14 @@ class SchoolAudioEngine {
       if (!AudioCtx) return;
       this.ctx = new AudioCtx();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.72;
+      this.master.gain.value = 0.82;
       this.master.connect(this.ctx.destination);
       this.musicBus = this.ctx.createGain();
       this.musicBus.gain.value = this.musicEnabled ? 0.42 : 0;
       this.musicBus.connect(this.master);
       this.stepBus = this.ctx.createGain();
-      this.stepBus.gain.value = 0.55;
+      // Keep footsteps clearly audible over the softer campus soundtrack.
+      this.stepBus.gain.value = 0.95;
       this.stepBus.connect(this.master);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
@@ -537,19 +538,56 @@ class SchoolAudioEngine {
   }
 
   playFootstep() {
-    if (!this.stepsEnabled || !this.ctx || this.ctx.state !== 'running') return;
+    if (!this.stepsEnabled || !this.ctx) return;
+
+    // A suspended context can occur on mobile browsers. Resume it rather than
+    // silently discarding the footstep that happens just after the first tap.
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+
     const now = this.ctx.currentTime;
-    const bufferSize = Math.floor(this.ctx.sampleRate * 0.065);
+    const destination = this.stepBus || this.master || this.ctx.destination;
+    this.stepIndex = (this.stepIndex || 0) + 1;
+    const side = this.stepIndex % 2 ? 1 : 0.92;
+
+    // Soft sole impact: a short descending low tone gives each step a clear thud.
+    const thud = this.ctx.createOscillator();
+    const thudGain = this.ctx.createGain();
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(112 + (this.stepIndex % 2) * 5, now);
+    thud.frequency.exponentialRampToValueAtTime(58, now + 0.105);
+    thudGain.gain.setValueAtTime(0.0001, now);
+    thudGain.gain.linearRampToValueAtTime(0.19 * side, now + 0.008);
+    thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.125);
+    thud.connect(thudGain);
+    thudGain.connect(destination);
+    thud.start(now);
+    thud.stop(now + 0.14);
+
+    // Short shoe-on-ground texture, longer and more audible than the old 65 ms click.
+    const duration = 0.125;
+    const bufferSize = Math.floor(this.ctx.sampleRate * duration);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
-    const noise = this.ctx.createBufferSource(); noise.buffer = buffer;
+    for (let i = 0; i < bufferSize; i++) {
+      const envelope = Math.exp(-i / (bufferSize * 0.43));
+      data[i] = (Math.random() * 2 - 1) * envelope;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
     const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass'; filter.frequency.setValueAtTime(720 + Math.random() * 160, now); filter.Q.setValueAtTime(2.2, now);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1050 + Math.random() * 260, now);
+    filter.Q.setValueAtTime(0.9, now);
     const stepGain = this.ctx.createGain();
-    stepGain.gain.setValueAtTime(0.085, now); stepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
-    noise.connect(filter); filter.connect(stepGain); stepGain.connect(this.stepBus || this.ctx.destination);
+    stepGain.gain.setValueAtTime(0.0001, now);
+    stepGain.gain.linearRampToValueAtTime(0.22 * side, now + 0.009);
+    stepGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    noise.connect(filter);
+    filter.connect(stepGain);
+    stepGain.connect(destination);
     noise.start(now);
+    noise.stop(now + duration + 0.01);
   }
 }
 const audio = new SchoolAudioEngine();
